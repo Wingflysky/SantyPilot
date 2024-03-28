@@ -125,14 +125,14 @@ bool fieldTypeLessThan(const FieldInfo *f1, const FieldInfo *f2)
  * @param filename The xml filename
  * @returns Null QString() on success, error message on failure
  */
-QString UAVObjectParser::parseXML(QString & xml, QString & filename)
+std::string UAVObjectParser::parseXML(std::string& xml, std::string& filename)
 {
     // Create DOM document and parse it
     QDomDocument doc("UAVObjects");
-    bool parsed = doc.setContent(xml);
+    bool parsed = doc.setContent(QString::fromStdString(xml));
 
     if (!parsed) {
-        return QString("Improperly formated XML file");
+        return std::string("Improperly formated XML file");
     }
 
     // Read all objects contained in the XML file, creating an new ObjectInfo for each
@@ -142,11 +142,11 @@ QString UAVObjectParser::parseXML(QString & xml, QString & filename)
         // Create new object entry
         ObjectInfo *info = new ObjectInfo;
 
-        info->filename = filename;
+        info->filename = QString::fromStdString(filename);
         // Process object attributes
-        QString status = processObjectAttributes(node, info);
+        auto status = processObjectAttributes(node, info);
         if (!status.isNull()) {
-            return status;
+            return status.toStdString();
         }
 
         // Process child elements (fields and metadata)
@@ -162,14 +162,14 @@ QString UAVObjectParser::parseXML(QString & xml, QString & filename)
             if (childNode.nodeName().compare(QString("field")) == 0) {
                 QString status = processObjectFields(childNode, info);
                 if (!status.isNull()) {
-                    return status;
+                    return status.toStdString();
                 }
 
                 fieldFound = true;
             } else if (childNode.nodeName().compare(QString("access")) == 0) {
                 QString status = processObjectAccess(childNode, info);
                 if (!status.isNull()) {
-                    return status;
+                    return status.toStdString();
                 }
 
                 accessFound = true;
@@ -177,7 +177,7 @@ QString UAVObjectParser::parseXML(QString & xml, QString & filename)
                 QString status = processObjectMetadata(childNode, &info->gcsTelemetryUpdateMode,
                                                        &info->gcsTelemetryUpdatePeriod, &info->gcsTelemetryAcked);
                 if (!status.isNull()) {
-                    return status;
+                    return status.toStdString();
                 }
 
                 telGCSFound = true;
@@ -185,7 +185,7 @@ QString UAVObjectParser::parseXML(QString & xml, QString & filename)
                 QString status = processObjectMetadata(childNode, &info->flightTelemetryUpdateMode,
                                                        &info->flightTelemetryUpdatePeriod, &info->flightTelemetryAcked);
                 if (!status.isNull()) {
-                    return status;
+                    return status.toStdString();
                 }
 
                 telFlightFound = true;
@@ -193,7 +193,7 @@ QString UAVObjectParser::parseXML(QString & xml, QString & filename)
                 QString status = processObjectMetadata(childNode, &info->loggingUpdateMode,
                                                        &info->loggingUpdatePeriod, NULL);
                 if (!status.isNull()) {
-                    return status;
+                    return status.toStdString();
                 }
 
                 logFound = true;
@@ -201,12 +201,12 @@ QString UAVObjectParser::parseXML(QString & xml, QString & filename)
                 QString status = processObjectDescription(childNode, &info->description);
 
                 if (!status.isNull()) {
-                    return status;
+                    return status.toStdString();
                 }
 
                 descriptionFound = true;
             } else if (!childNode.isComment()) {
-                return QString("Unknown object element");
+                return std::string("Unknown object element");
             }
 
             // Get next element
@@ -218,28 +218,28 @@ QString UAVObjectParser::parseXML(QString & xml, QString & filename)
 
         // Make sure that required elements were found
         if (!fieldFound) {
-            return QString("Object::field element is missing");
+            return std::string("Object::field element is missing");
         }
 
         if (!accessFound) {
-            return QString("Object::access element is missing");
+            return std::string("Object::access element is missing");
         }
 
         if (!telGCSFound) {
-            return QString("Object::telemetrygcs element is missing");
+            return std::string("Object::telemetrygcs element is missing");
         }
 
         if (!telFlightFound) {
-            return QString("Object::telemetryflight element is missing");
+            return std::string("Object::telemetryflight element is missing");
         }
 
         if (!logFound) {
-            return QString("Object::logging element is missing");
+            return std::string("Object::logging element is missing");
         }
 
         // TODO: Make into error once all objects updated
         if (!descriptionFound) {
-            return QString("Object::description element is missing");
+            return std::string("Object::description element is missing");
         }
 
         // Calculate ID
@@ -254,7 +254,7 @@ QString UAVObjectParser::parseXML(QString & xml, QString & filename)
 
     all_units.removeDuplicates();
     // Done, return null string
-    return QString();
+    return "";
 }
 
 /**

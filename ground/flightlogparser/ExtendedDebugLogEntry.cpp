@@ -59,8 +59,21 @@ void ExtendedDebugLogEntry::toCSV(QTextStream *csvStream, quint32 baseTime)
     } else if (getType() == DebugLogEntry::TYPE_UAVOBJECT || getType() == DebugLogEntry::TYPE_MULTIPLEUAVOBJECTS) {
         data = m_object->toString().replace("\n", " ").replace("\t", " ");
     }
+	if (data.isEmpty()) { // filter invalid log
+	    return;
+	}
 	std::cout << "writing: " << data.toStdString() << std::endl;
     *csvStream << QString::number(getFlight() + 1) << '\t' << QString::number(getFlightTime() - baseTime) << '\t' << QString::number(getEntry()) << '\t' << data << '\n';
+}
+
+std::string ExtendedDebugLogEntry::getLogData() {
+    QString data;
+    if (getType() == DebugLogEntry::TYPE_TEXT) {
+        data = QString((const char *)getData().Data);
+    } else if (getType() == DebugLogEntry::TYPE_UAVOBJECT || getType() == DebugLogEntry::TYPE_MULTIPLEUAVOBJECTS) {
+        data = m_object->toString().replace("\n", " ").replace("\t", " ");
+    }
+	return data.toStdString();
 }
 
 void ExtendedDebugLogEntry::setData(const DebugLogEntry::DataFields &data, UAVObjectManager *objectManager)

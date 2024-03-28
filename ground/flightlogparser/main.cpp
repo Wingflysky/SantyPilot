@@ -40,8 +40,10 @@
 #include <iomanip>
 #include "debuglogentry.h"
 #include "ExtendedDebugLogEntry.h"
+#include "EKFLogAnalyzer.h"
 #include "uavobjectmanager.h"
 #include "uavobjectsinit.h"
+#include "uavobjectparser.h"
 
 #define RETURN_ERR_USAGE 1
 #define RETURN_ERR_XML   2
@@ -51,10 +53,13 @@
 #define LOG_GET_FLIGHT_OBJID(x) ((DEBUGLOGENTRY_OBJID & ~0xFF) | (x & 0xFF))
 
 using santypilot_gcs::flightlogparser::ExtendedDebugLogEntry;
+using santypilot_gcs::flightlogparser::EKFLogAnalyzer;
 /**
  * entrance
  */
 const std::string LOGS_DIR = "/home/santy/source/SantyPilot/logs/";
+const std::string XML_DIR = "/home/santy/source/SantyPilot/shared/uavobjectdefinition";
+const size_t ANA_NUM_POINTS = 1000;
 UAVObjectManager g_mgr;
 
 void objectFilename(uint32_t obj_id, uint16_t obj_inst_id, uint8_t *filename) {
@@ -206,11 +211,14 @@ int32_t load_obj(const std::string& dir,
     return 0;
 }
 
-int32_t read_parse_uavo_log(const std::string& dir) {
+int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
+		const size_t& rate) {
+	const std::string dir = LOGS_DIR;
 	uint16_t flightnum = 0;
 	// auto files = file_list(dir);
 	uint16_t lognum = 0; // mock
 	bool has_file = true;
+	size_t idx = 0;
 
 	DebugLogEntry::DataFields entry;
 	entry.Flight = flightnum;
@@ -218,7 +226,6 @@ int32_t read_parse_uavo_log(const std::string& dir) {
 	entry.Type = DebugLogEntry::TypeOptions::TYPE_EMPTY;
 	uint16_t obj_size = sizeof(DebugLogEntry::DataFields);
 
-	ExtendedDebugLogEntry *log_entry = new ExtendedDebugLogEntry();
 	// init output csv file
 	auto now = std::chrono::system_clock::now();
 	auto now_time_t = std::chrono::system_clock::to_time_t(now);
@@ -272,23 +279,26 @@ int32_t read_parse_uavo_log(const std::string& dir) {
 			lognum++;
 
 			// log output entry
-			ExtendedDebugLogEntry *ex_entry = new ExtendedDebugLogEntry();
+			ExtendedDebugLogEntry* ex_entry = new ExtendedDebugLogEntry;
+			if (idx % (rate + 1) == 0) {
+				logs.emplace_back(ex_entry);
+			}
+			idx++;
 			ex_entry->setData(entry, &g_mgr);
 			ex_entry->toCSV(&csvStream, baseTime);
-			delete ex_entry;
 			
-			if (DebugLogEntry::TYPE_MULTIPLEUAVOBJECTS == log_entry->getType()) {
+			if (DebugLogEntry::TYPE_MULTIPLEUAVOBJECTS == ex_entry->getType()) {
 				const quint32 total_len  = sizeof(DebugLogEntry::DataFields);
 				const quint32 data_len   = sizeof(((DebugLogEntry::DataFields *)0)->Data);
 				const quint32 header_len = total_len - data_len;
 
 				DebugLogEntry::DataFields fields;
-				quint32 start = log_entry->getData().Size;
+				quint32 start = ex_entry->getData().Size;
 
 				// cycle until there is space for another object
 				while (start + header_len + 1 < data_len) {
 					memset(&fields, 0xFF, total_len);
-					auto tmp = log_entry->getData().Data[start];
+					auto tmp = ex_entry->getData().Data[start];
 					memcpy(&fields, &tmp, header_len);
 					// check wether a packed object is found
 					// note that empty data blocks are set as 0xFF in 
@@ -298,14 +308,16 @@ int32_t read_parse_uavo_log(const std::string& dir) {
 					quint32 toread = header_len + fields.Size;
 					if (!(toread + start > data_len)) {
 						memcpy(&fields, &tmp, toread);
-						ExtendedDebugLogEntry *subEntry = new ExtendedDebugLogEntry();
+						ExtendedDebugLogEntry* subEntry = new ExtendedDebugLogEntry;
 						subEntry->setData(fields, &g_mgr);
 						subEntry->toCSV(&csvStream, baseTime);
+					    // logs.emplace_back(subEntry);
 						delete subEntry;
 					}
 					start += toread;
 				}
 			} // multi objs
+			// delete ex_entry;
 		} // has log 
 		if (!has_file) {
 			std::cout << "file read end!\n";
@@ -317,9 +329,31 @@ int32_t read_parse_uavo_log(const std::string& dir) {
 	csvStream.flush();
 	csvFile.flush();
 	csvFile.close();
-
-	delete log_entry;
 	return 0;
+}
+
+void freeExtendedDebugLogEntry(std::vector<ExtendedDebugLogEntry*>& logs) {
+    for (auto& log: logs) {
+	    if (log != nullptr) {
+		    delete log;
+			log = nullptr;
+		}
+	}
+	return;
+}
+
+std::string read_content(const std::string& filename) {
+	FILE *fptr = fopen(filename.c_str(), "rb");
+	if (fptr == nullptr) {
+		std::cout << "open file " << filename << " failed\n";
+	    return "";
+	}
+	const size_t BUFFER_SIZE = 1024 * 5;
+	char buffer[BUFFER_SIZE]; // 5KB
+	size_t b = fread(buffer, sizeof(char), BUFFER_SIZE, fptr);
+    fclose(fptr);
+	std::string str(buffer, b);
+    return str;
 }
 
 int main(int argc, char** argv) {
@@ -327,11 +361,43 @@ int main(int argc, char** argv) {
 	auto files = file_list(LOGS_DIR);
 	std::cout << "parsed file nums:" << 
 		files.size() << std::endl;
+	size_t down_sample_rate = files.size() / ANA_NUM_POINTS;
 	// 2. write read check equal
 	// check_data_file();
 	// 3. parse args
+	// parse and build ref trees
+	auto xmls = file_list(XML_DIR);
+    UAVObjectParser *parser = new UAVObjectParser();
+	for (auto& xml: xmls) {
+		std::string fn = XML_DIR + "/" + xml;
+		auto xmlstr = read_content(fn);
+		auto status = parser->parseXML(xmlstr, fn);
+	}
+	auto sz = parser->getNumObjects();
+	std::cout << "num of objects: " << sz << std::endl;
+
 	// cycle read parse -> fill logEntry -> export csv
-	UAVObjectsInitialize(&g_mgr);;
-    read_parse_uavo_log(LOGS_DIR);
+	UAVObjectsInitialize(&g_mgr);
+	// 4. collect logs
+	std::vector<ExtendedDebugLogEntry*> logs;
+    read_parse_uavo_log(logs, down_sample_rate);
+	// 5. use logs: 
+	// 5.1 filter() replay bug 
+	// 5.2 show states
+	// 5.3 evaluate bug occurs: do some warning mechanism 
+	// 5.4 mock by step
+	// 5.5 maybe which matrix init too big or calc not recursive
+	// template<typename T> class Filter{};
+	EKFLogAnalyzer analyzer;
+	std::map<std::string, std::string> table {
+		{"FILTERSTATES","GPSNorth"}
+	};
+	analyzer.init(table);
+	analyzer.process(parser->getObjectInfo(), logs);
+	// analyzer.analyze(logs);
+	// show some sensors
+	// show some sensors
+	// 6. free logs
+	freeExtendedDebugLogEntry(logs);
 	return 0;
 }

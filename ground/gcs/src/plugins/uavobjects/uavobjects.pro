@@ -71,6 +71,7 @@ UAVOBJS = \
     $${UAVOBJ_XML_DIR}/ekfconfiguration.xml \
     $${UAVOBJ_XML_DIR}/ekfstatevariance.xml \
     $${UAVOBJ_XML_DIR}/faultsettings.xml \
+    $${UAVOBJ_XML_DIR}/filterstates.xml \
     $${UAVOBJ_XML_DIR}/firmwareiapobj.xml \
     $${UAVOBJ_XML_DIR}/fixedwingpathfollowersettings.xml \
     $${UAVOBJ_XML_DIR}/fixedwingpathfollowerstatus.xml \

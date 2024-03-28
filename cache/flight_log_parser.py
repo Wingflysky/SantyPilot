@@ -6,12 +6,16 @@ import os
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ET
 
+# user configs
 flight_obj_dir = '/home/santy/source/SantyPilot/shared/uavobjectdefinition'
 Flight = 1
-pnt_cnt = 10
+pnt_cnt = 100
 show_obj_fields = {
-	'GPSPOSITIONSENSOR': ['Altitude']
+	'FILTERSTATES': ['GPSNorth','North'],
 }
+# figure labels
+ylabel = 'distance'
+legends = ['gps north','estimated north']
 
 def read_csv_log(filename):
 	with open(filename, 'r') as file:
@@ -151,20 +155,25 @@ def main(args):
 
 	# draw 
 	x = []
-	y = []
+	y0 = []
+	y1 = []
 	for name in show_obj_fields.keys():
-		for field in show_obj_fields[name]:
-			temp = []
-			for i in range(len(detail[name])):
-				x.append(detail[name][i]['FlightTime'])
-				temp.append(detail[name][i][field])
-			y.append(temp)
+		field = show_obj_fields[name]
+		for i in range(len(detail[name])):
+			x.append(detail[name][i]['FlightTime'])
+			y0.append(float(detail[name][i][field[0]]))
+			if len(field) > 1:
+				y1.append(float(detail[name][i][field[1]]))
 	subrate = int(len(x) / pnt_cnt)
 	# print(len(x), len(y[0]))
 	plt.figure()
-	plt.plot(x[1:len(x):subrate], y[0][1:len(x):subrate], color='red', linestyle='dashed')
+	plt.plot(x[1:len(x):subrate], y0[1:len(x):subrate], color='red', linestyle='dashed')
+	if len(y1) > 1:
+		plt.plot(x[1:len(x):subrate], y1[1:len(x):subrate], color='blue', linestyle='dotted')
 	plt.title('Flight Data')
 	plt.xlabel('Flight Time')
+	plt.ylabel(ylabel)
+	plt.legend(legends)
 	plt.xticks(rotation=45)
 	plt.show()
 

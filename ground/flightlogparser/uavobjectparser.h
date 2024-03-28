@@ -106,7 +106,7 @@ public:
 
     // Functions
     UAVObjectParser();
-    QString parseXML(QString & xml, QString & filename);
+	std::string parseXML(std::string& xml, std::string& filename);
     int getNumObjects();
     QList<ObjectInfo *> getObjectInfo();
     QString getObjectName(int objIndex);

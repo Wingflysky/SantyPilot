@@ -25,6 +25,7 @@ CONFIG -= app_bundle
 TEMPLATE = app
 DESTDIR = $$OUT_PWD # Set a consistent output dir on windows
 QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -g
 
 # uavobjects 
 ROOT_DIR = ../../
@@ -71,6 +72,7 @@ UAVOBJS = \
     $${UAVOBJ_XML_DIR}/ekfconfiguration.xml \
     $${UAVOBJ_XML_DIR}/ekfstatevariance.xml \
     $${UAVOBJ_XML_DIR}/faultsettings.xml \
+    $${UAVOBJ_XML_DIR}/filterstates.xml \
     $${UAVOBJ_XML_DIR}/firmwareiapobj.xml \
     $${UAVOBJ_XML_DIR}/fixedwingpathfollowersettings.xml \
     $${UAVOBJ_XML_DIR}/fixedwingpathfollowerstatus.xml \

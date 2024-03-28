@@ -11,6 +11,7 @@
 #include <QObject>
 #include <QXmlStreamWriter>
 #include <QTextStream>
+#include <string>
 
 namespace santypilot_gcs {
 namespace flightlogparser {
@@ -29,6 +30,7 @@ public:
     {
         return m_object;
     }
+	std::string getLogData();
 
     void setData(const DataFields & data, UAVObjectManager *objectManager);
 

@@ -37,6 +37,7 @@
 #include <attitudestate.h>
 #include <systemalarms.h>
 #include <homelocation.h>
+#include <filterstates.h>
 
 #include <insgps.h>
 #include <CoordinateConversions.h>
