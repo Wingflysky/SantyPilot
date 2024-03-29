@@ -25,6 +25,7 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include <QtCore/QCoreApplication>
+#include <QDir>
 #include <QFile>
 #include <QString>
 #include <QStringList>
@@ -104,7 +105,8 @@ std::vector<std::string> file_list(const std::string& dir) {
 		return ret;
 	} else if (pid > 0) { // parent
 	    close(pipefd[1]); // close write side
-		char buffer[4096];
+		const size_t LEN = 100 * 1024; // 100K
+		char buffer[LEN];
 		size_t bytes;
 		while ((bytes = read(pipefd[0],
 				   			 buffer,
@@ -264,6 +266,7 @@ int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
 			}
 			// see UAVObjectField for
 			memcpy((char*)&entry, buffer, obj_size);
+			/*
 			std::cout << "entry flight time: " << entry.FlightTime << std::endl;
 			std::cout << "entry object id: " << entry.ObjectID << std::endl;
 			std::cout << "entry flight: " << entry.Flight << std::endl;
@@ -276,14 +279,11 @@ int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
 					  << (entry.Type == DebugLogEntry::TYPE_UAVOBJECT) << "-uavo "
 					  << (entry.Type == DebugLogEntry::TYPE_MULTIPLEUAVOBJECTS) << "-mul\n";
 			// next cycle		  
+			*/
 			lognum++;
 
 			// log output entry
 			ExtendedDebugLogEntry* ex_entry = new ExtendedDebugLogEntry;
-			if (idx % (rate + 1) == 0) {
-				logs.emplace_back(ex_entry);
-			}
-			idx++;
 			ex_entry->setData(entry, &g_mgr);
 			ex_entry->toCSV(&csvStream, baseTime);
 			
@@ -317,6 +317,12 @@ int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
 					start += toread;
 				}
 			} // multi objs
+			if (idx % rate == 0) { // managed outside
+				logs.emplace_back(ex_entry);
+			} else {
+			    delete ex_entry;
+			}
+			idx++;
 			// delete ex_entry;
 		} // has log 
 		if (!has_file) {
@@ -357,10 +363,20 @@ std::string read_content(const std::string& filename) {
 }
 
 int main(int argc, char** argv) {
-	// 1. file list
-	auto files = file_list(LOGS_DIR);
-	std::cout << "parsed file nums:" << 
-		files.size() << std::endl;
+	// 1. file list: pipe has transfer data size limit
+	// auto files = file_list(LOGS_DIR);
+	// std::cout << "parsed file nums:" << 
+	//	files.size() << std::endl;
+	// std::cout << "first file:" <<
+	//	files.front() << std::endl;
+	// size_t down_sample_rate = files.size() / ANA_NUM_POINTS;
+
+	// another method for xml file
+    QStringList filters     = QStringList("*.*");
+    QDir path = QDir(QString::fromStdString(LOGS_DIR));
+    path.setNameFilters(filters);
+    QFileInfoList files = path.entryInfoList();
+	std::cout << "get log file list: " << files.size() << std::endl;
 	size_t down_sample_rate = files.size() / ANA_NUM_POINTS;
 	// 2. write read check equal
 	// check_data_file();
@@ -387,15 +403,13 @@ int main(int argc, char** argv) {
 	// 5.3 evaluate bug occurs: do some warning mechanism 
 	// 5.4 mock by step
 	// 5.5 maybe which matrix init too big or calc not recursive
-	// template<typename T> class Filter{};
 	EKFLogAnalyzer analyzer;
 	std::map<std::string, std::string> table {
 		{"FILTERSTATES","GPSNorth"}
 	};
 	analyzer.init(table);
 	analyzer.process(parser->getObjectInfo(), logs);
-	// analyzer.analyze(logs);
-	// show some sensors
+	//analyzer.analyze(logs);
 	// show some sensors
 	// 6. free logs
 	freeExtendedDebugLogEntry(logs);

@@ -62,7 +62,7 @@ void ExtendedDebugLogEntry::toCSV(QTextStream *csvStream, quint32 baseTime)
 	if (data.isEmpty()) { // filter invalid log
 	    return;
 	}
-	std::cout << "writing: " << data.toStdString() << std::endl;
+	// std::cout << "writing: " << data.toStdString() << std::endl;
     *csvStream << QString::number(getFlight() + 1) << '\t' << QString::number(getFlightTime() - baseTime) << '\t' << QString::number(getEntry()) << '\t' << data << '\n';
 }
 

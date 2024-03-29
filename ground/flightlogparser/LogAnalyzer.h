@@ -39,14 +39,12 @@ public:
 			// map field to unit string
 		}
 		for (auto* entry: logs) {
-			/*
 		    auto data = entry->getLogData();
 			if (data.empty()) {
 			    continue;
 			}
 			auto tokens = split(data, ' ');
 			std::cout << tokens.size() << "----" << std::endl;
-			*/
 		}
 	}
 private:

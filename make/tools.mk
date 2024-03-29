@@ -1105,6 +1105,7 @@ openocd_clean:
 #
 # stm32flash v1.2.0
 # @santypilot team
+# stm32flash
 #
 STM32FLASH_DIR := $(TOOLS_DIR)/stm32flash
 ifeq ($(UNAME), Windows)
