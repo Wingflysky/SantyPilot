@@ -1,7 +1,6 @@
 #
-# Qmake project for UAVObjGenerator.
-# Copyright (c) 2017, The LibrePilot Project, https://www.librepilot.org
-# Copyright (c) 2010-2013, The OpenPilot Team, http://www.openpilot.org
+# Qmake project for flightlogparser.
+# Copyright (c) 2024-2034, The SantyPilot Team
 #
 
 QT += xml qml
@@ -167,6 +166,8 @@ UAVOBJS = \
 
 include(flightlogparser.pri)
 
+INCLUDE_DIRECTORIES += \
+	$${ROOT_DIR}/ground/flightlogparser/libraries/inc
 
 SOURCES += main.cpp \
 	ExtendedDebugLogEntry.cpp \
@@ -175,7 +176,8 @@ SOURCES += main.cpp \
     uavmetaobject.cpp \
     uavobjectmanager.cpp \
     uavdataobject.cpp \
-    uavobjectfield.cpp
+    uavobjectfield.cpp \
+	libraries/insgps13state.c \
 
 HEADERS += uavobjectparser.h \
 	ExtendedDebugLogEntry.h \
@@ -185,4 +187,5 @@ HEADERS += uavobjectparser.h \
     uavobjectmanager.h \
     uavdataobject.h \
     uavobjectfield.h \
-    uavobjectsinit.h
+    uavobjectsinit.h \
+

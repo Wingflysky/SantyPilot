@@ -9,58 +9,66 @@
 
 #include "LogAnalyzer.h"
 #include <iostream>
+#include <cmath>
 #include "filterstates.h"
+#include <ekfconfiguration.h>
+#include <ekfstatevariance.h>
+#include <homelocation.h>
 
 namespace santypilot_gcs {
 namespace flightlogparser {
 
 class EKFLogAnalyzer: public LogAnalyzer {
 public:
+	// input data type
+	using DataType = std::map<std::string, 
+		  std::vector<std::pair<size_t, double>>>;
+
+	struct LocalData {
+		EKFConfigurationData ekfConfiguration;
+		HomeLocationData     homeLocation;
+		bool    usePos;
+		int32_t init_stage;
+		// stateEstimation work;
+		bool  inited;
+		bool  navOnly;
+		float magLockAlpha;
+	};
 	struct SensorData {
 	};
-	virtual void parse(const std::vector<std::string>& tokens,
-			std::map<std::string, std::string>& refer) {
-		size_t idx = 0;
-		for (; idx < tokens.size(); idx++) {
-			if (tokens[idx] == "Data:") {
-			    break;
-			}
-		}
-		if (idx == tokens.size()) {
-		    return; // not found
-		}
-		auto& name = tokens[idx];
-		if (name !=  "FILTERSTATES") {
-		    return;
-		}
-		// key: [ value ] unit
-		idx++;
-		for (; idx < tokens.size();) {
-			const auto& unit = refer[tokens[idx]];
-		}
-	}
 
-	virtual void analyze(const std::vector<ExtendedDebugLogEntry*>& logs) {
+	// 1 filter() replay bug 
+	// 2 show states
+	// 3 evaluate bug occurs: do some warning mechanism 
+	// 4 mock by step
+	// 5 maybe which matrix init too big or calc not recursive
+	virtual void analyze() {
 		// 1. filter data
-		for (auto& log: logs) {
-			std::string data;// = log->getLogData();
-			if (data.empty()) { // filter invalid ones
-			    continue;
-			}
-			std::cout << data << std::endl;
-			FilterStates::DataFields filter_states;
-			// filter_states
-		}
+		DataType _data;
+		// 2. call filter functions 
+		// & evaluate states
 
-		// 2. process specific field data and plot
-		// call filter functions
+		// 3. evaluate intermediate variables
 	    return;
 	}
-protected:
-	bool parse(const std::string& raw) {
-		return true;
-	}
 private:
+	void init() {
+		EKFConfigurationInitialize();
+		EKFConfigurationGet(&this->ekfConfiguration);
+	}
+	// check for isnan or close to zero
+	static inline bool invalid_var(float data) {
+		if (std::isnan(data) || std::isinf(data)) {
+			return true;
+		}
+		if (data < 1e-15f) { 
+			// var should not be close to zero. 
+			// And not negative either.
+			return true;
+		}
+		return false;
+	}
+	// do filter StateEstimation/filterekf.c
 	FilterStates::DataFields fields;
 }; // EKFLogAnalyzer
 } // flightlogparser

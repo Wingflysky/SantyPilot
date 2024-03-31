@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <chrono>
 #include <ctime>
+#include <set>
 #include <iomanip>
 #include "debuglogentry.h"
 #include "ExtendedDebugLogEntry.h"
@@ -398,17 +399,24 @@ int main(int argc, char** argv) {
 	std::vector<ExtendedDebugLogEntry*> logs;
     read_parse_uavo_log(logs, down_sample_rate);
 	// 5. use logs: 
-	// 5.1 filter() replay bug 
-	// 5.2 show states
-	// 5.3 evaluate bug occurs: do some warning mechanism 
-	// 5.4 mock by step
-	// 5.5 maybe which matrix init too big or calc not recursive
 	EKFLogAnalyzer analyzer;
-	std::map<std::string, std::string> table {
-		{"FILTERSTATES","GPSNorth"}
+	std::set<std::string> table {
+		{"FILTERSTATES:GPSNorth"}
 	};
 	analyzer.init(table);
 	analyzer.process(parser->getObjectInfo(), logs);
+	const auto& data = analyzer.getData();
+	for (auto &kv: data) {
+		std::cout << kv.first << " data len: " << kv.second.size() << std::endl;
+		size_t bidx = 0;
+		for (auto& d: kv.second) {
+		    std::cout << d.first << ":" << d.second << " ";
+			bidx++;
+			if (bidx % 3 == 0) {
+				std::cout << std::endl;
+			}
+		}
+	}
 	//analyzer.analyze(logs);
 	// show some sensors
 	// 6. free logs
