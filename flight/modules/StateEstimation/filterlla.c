@@ -35,8 +35,6 @@
 #include <homelocation.h>
 #include <gpssettings.h>
 #include <gpspositionsensor.h>
-#include <filterstates.h>
-
 // Private constants
 
 #define STACK_REQUIRED 256
@@ -111,13 +109,6 @@ static filterResult filter(__attribute__((unused)) stateFilter *self, stateEstim
             };
             LLA2Base(LLAi, this->HomeECEF, this->HomeRne, state->pos);
             state->updated |= SENSORUPDATES_pos;
-
-			FilterStatesData s;
-			FilterStatesGet(&s);
-			s.GPSNorth = state->pos[0];
-			s.GPSEast = state->pos[1];
-			s.GPSDown = state->pos[2];
-			FilterStatesSet(&s);
         }
     }
 

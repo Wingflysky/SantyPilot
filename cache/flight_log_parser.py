@@ -10,12 +10,13 @@ import xml.etree.ElementTree as ET
 flight_obj_dir = '/home/santy/source/SantyPilot/shared/uavobjectdefinition'
 Flight = 1
 pnt_cnt = 100
+tag = 'North'
 show_obj_fields = {
-	'FILTERSTATES': ['GPSNorth','North'],
+	'FILTERSTATES': [tag],
 }
 # figure labels
-ylabel = 'distance'
-legends = ['gps north','estimated north']
+ylabel = tag
+legends = [tag]
 
 def read_csv_log(filename):
 	with open(filename, 'r') as file:
@@ -43,7 +44,7 @@ def parse_obj_data(raw, info):
 			break
 	if idi == -1:
 		return name, ret 
-	while idi < len(str_list):
+	while idi + 2 < len(str_list):
 		k = str_list[idi][0: -1]
 		v = str_list[idi + 2]
 		ret[k] = v
@@ -165,6 +166,8 @@ def main(args):
 			if len(field) > 1:
 				y1.append(float(detail[name][i][field[1]]))
 	subrate = int(len(x) / pnt_cnt)
+	if subrate == 0:
+		subrate = 1
 	# print(len(x), len(y[0]))
 	plt.figure()
 	plt.plot(x[1:len(x):subrate], y0[1:len(x):subrate], color='red', linestyle='dashed')

@@ -112,6 +112,7 @@ PERF_DEFINE_COUNTER(counterSimSensorPeriod);
  */
 int32_t SensorsInitialize(void)
 {
+	// bias set const
     accel_bias[0] = rand_gauss() / 10;
     accel_bias[1] = rand_gauss() / 10;
     accel_bias[2] = rand_gauss() / 10;

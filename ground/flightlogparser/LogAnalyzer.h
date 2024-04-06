@@ -183,7 +183,7 @@ protected:
 		auto ed = str.find_last_not_of(' ');
 		return str.substr(st, ed - st + 1);
 	}
-private:
+protected:
 	std::map<std::string, std::vector<std::string>> _obj_fields;
 	DataType _data;
 }; // LogAnalyzer 

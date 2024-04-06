@@ -178,6 +178,7 @@ SOURCES += main.cpp \
     uavdataobject.cpp \
     uavobjectfield.cpp \
 	libraries/insgps13state.c \
+	libraries/CoordinateConversions.c \
 
 HEADERS += uavobjectparser.h \
 	ExtendedDebugLogEntry.h \

@@ -64,6 +64,17 @@ const std::string XML_DIR = "/home/santy/source/SantyPilot/shared/uavobjectdefin
 const size_t ANA_NUM_POINTS = 1000;
 UAVObjectManager g_mgr;
 
+enum FILTER_TYPE {
+    TOP_K = 0,
+	DOWN_SAMPLE,
+	UNKNOWN_TYPE
+};
+
+struct CtrlInfo {
+    FILTER_TYPE type;
+	size_t amount;
+};
+
 void objectFilename(uint32_t obj_id, uint16_t obj_inst_id, uint8_t *filename) {
     uint32_t prefix = obj_id + (obj_inst_id / 256) * 16; 
     uint8_t suffix  = obj_inst_id & 0xff;
@@ -215,12 +226,13 @@ int32_t load_obj(const std::string& dir,
 }
 
 int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
-		const size_t& rate) {
+		const CtrlInfo& info) {
 	const std::string dir = LOGS_DIR;
 	uint16_t flightnum = 0;
 	// auto files = file_list(dir);
 	uint16_t lognum = 0; // mock
 	bool has_file = true;
+	bool has_log = true;
 	size_t idx = 0;
 
 	DebugLogEntry::DataFields entry;
@@ -256,7 +268,7 @@ int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
 	    char buffer[obj_size];
 
 		// 2. cycle flight instance id
-		while (true) {
+		while (has_log) {
 		    uint16_t obj_inst_id = lognum;
 			int32_t res = load_obj(dir, obj_id, obj_inst_id, buffer, obj_size);
 			if (res < 0) {
@@ -267,7 +279,7 @@ int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
 			}
 			// see UAVObjectField for
 			memcpy((char*)&entry, buffer, obj_size);
-			/*
+
 			std::cout << "entry flight time: " << entry.FlightTime << std::endl;
 			std::cout << "entry object id: " << entry.ObjectID << std::endl;
 			std::cout << "entry flight: " << entry.Flight << std::endl;
@@ -280,7 +292,6 @@ int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
 					  << (entry.Type == DebugLogEntry::TYPE_UAVOBJECT) << "-uavo "
 					  << (entry.Type == DebugLogEntry::TYPE_MULTIPLEUAVOBJECTS) << "-mul\n";
 			// next cycle		  
-			*/
 			lognum++;
 
 			// log output entry
@@ -318,10 +329,25 @@ int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
 					start += toread;
 				}
 			} // multi objs
-			if (idx % rate == 0) { // managed outside
-				logs.emplace_back(ex_entry);
-			} else {
-			    delete ex_entry;
+			switch (info.type) {
+				case FILTER_TYPE::DOWN_SAMPLE: 
+					if (idx % info.amount == 0) { // managed outside
+						logs.emplace_back(ex_entry);
+					} else {
+						delete ex_entry;
+					}
+					break;
+				case FILTER_TYPE::TOP_K:
+					if (idx < info.amount) {
+						logs.emplace_back(ex_entry);
+					} else {
+					    delete ex_entry;
+						has_log = false;
+						has_file = false;
+					}
+					break;
+				default:
+					break;
 			}
 			idx++;
 			// delete ex_entry;
@@ -378,7 +404,12 @@ int main(int argc, char** argv) {
     path.setNameFilters(filters);
     QFileInfoList files = path.entryInfoList();
 	std::cout << "get log file list: " << files.size() << std::endl;
+
 	size_t down_sample_rate = files.size() / ANA_NUM_POINTS;
+	down_sample_rate = (down_sample_rate != 0) ? down_sample_rate : 1;
+	CtrlInfo info;
+	info.type = TOP_K;
+	info.amount = 100;
 	// 2. write read check equal
 	// check_data_file();
 	// 3. parse args
@@ -397,11 +428,29 @@ int main(int argc, char** argv) {
 	UAVObjectsInitialize(&g_mgr);
 	// 4. collect logs
 	std::vector<ExtendedDebugLogEntry*> logs;
-    read_parse_uavo_log(logs, down_sample_rate);
+    read_parse_uavo_log(logs, info);
 	// 5. use logs: 
 	EKFLogAnalyzer analyzer;
 	std::set<std::string> table {
-		{"FILTERSTATES:GPSNorth"}
+		{"FILTERSTATES:GPSNorth"},
+		{"FILTERSTATES:GPSEast"},
+		{"FILTERSTATES:GPSDown"},
+		{"FILTERSTATES:GPSVelNorth"},
+		{"FILTERSTATES:GPSVelEast"},
+		{"FILTERSTATES:GPSVelDown"},
+		{"FILTERSTATES:dT"},
+		{"FILTERSTATES:gx"},
+		{"FILTERSTATES:gy"},
+		{"FILTERSTATES:gz"},
+		{"FILTERSTATES:ax"},
+		{"FILTERSTATES:ay"},
+		{"FILTERSTATES:az"},
+		{"FILTERSTATES:mx"},
+		{"FILTERSTATES:my"},
+		{"FILTERSTATES:mz"},
+		{"FILTERSTATES:North"},
+		{"FILTERSTATES:East"},
+		{"FILTERSTATES:Down"},
 	};
 	analyzer.init(table);
 	analyzer.process(parser->getObjectInfo(), logs);
@@ -417,7 +466,7 @@ int main(int argc, char** argv) {
 			}
 		}
 	}
-	//analyzer.analyze(logs);
+	analyzer.analyze();
 	// show some sensors
 	// 6. free logs
 	freeExtendedDebugLogEntry(logs);

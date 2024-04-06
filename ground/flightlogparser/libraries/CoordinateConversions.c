@@ -28,7 +28,7 @@
  */
 
 #include <stdint.h>
-#include <pios_math.h>
+#include "inc/pios_math.h"
 #include "inc/CoordinateConversions.h"
 
 #define MIN_ALLOWABLE_MAGNITUDE 1e-30f
