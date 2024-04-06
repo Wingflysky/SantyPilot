@@ -85,20 +85,7 @@ static int8_t GrowMax[NUMX] = { -1, -1, -1, 5, 5, 5, 2, 2, 2, 2, 6, 7, 8 };
 static int8_t HrowMin[NUMV] = { 0, 1, 2, 3, 4, 5, 6, 6, 6, 2 };
 static int8_t HrowMax[NUMV] = { 0, 1, 2, 3, 4, 5, 9, 9, 9, 2 };
 
-static struct EKFData {
-    // linearized system matrices
-    float F[NUMX][NUMX];
-    float G[NUMX][NUMW];
-    float H[NUMV][NUMX];
-    // local magnetic unit vector in NED frame
-    float Be[3];
-    // covariance matrix and state vector
-    float P[NUMX][NUMX];
-    float X[NUMX];
-    // input noise and measurement noise variances
-    float Q[NUMW];
-    float R[NUMV];
-} ekf;
+struct EKFData ekf;
 
 // Global variables
 struct NavStruct Nav;

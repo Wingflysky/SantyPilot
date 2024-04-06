@@ -100,6 +100,7 @@ std::vector<std::string> split(const std::string& s, char c) {
 	return ret;
 }
 
+/*
 std::vector<std::string> file_list(const std::string& dir) {
 	std::string command = "ls " + dir;
 	std::vector<std::string> ret;
@@ -142,6 +143,7 @@ std::vector<std::string> file_list(const std::string& dir) {
 	}
 	return ret;
 }
+*/
 
 #define TEST_LOG_FN "test.bin"
 struct Data {
@@ -414,10 +416,13 @@ int main(int argc, char** argv) {
 	// check_data_file();
 	// 3. parse args
 	// parse and build ref trees
-	auto xmls = file_list(XML_DIR);
+    filters     = QStringList("*.xml");
+    path = QDir(QString::fromStdString(XML_DIR));
+    path.setNameFilters(filters);
+    auto xmls = path.entryInfoList();
     UAVObjectParser *parser = new UAVObjectParser();
 	for (auto& xml: xmls) {
-		std::string fn = XML_DIR + "/" + xml;
+		std::string fn = XML_DIR + "/" + xml.fileName().toStdString();
 		auto xmlstr = read_content(fn);
 		auto status = parser->parseXML(xmlstr, fn);
 	}

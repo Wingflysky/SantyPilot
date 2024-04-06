@@ -93,6 +93,21 @@ extern struct NavStruct {
     float accel_bias[3];
 } Nav;
 
+extern struct EKFData {
+    // linearized system matrices
+    float F[NUMX][NUMX];
+    float G[NUMX][NUMW];
+    float H[NUMV][NUMX];
+    // local magnetic unit vector in NED frame
+    float Be[3];
+    // covariance matrix and state vector
+    float P[NUMX][NUMX];
+    float X[NUMX];
+    // input noise and measurement noise variances
+    float Q[NUMW];
+    float R[NUMV];
+} ekf;
+
 /**
  * @}
  * @}
