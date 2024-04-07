@@ -69,9 +69,15 @@ public:
             float Be2 = pow(_location_data.Be[0], 2) + 
 				pow(_location_data.Be[1], 2) + pow(_location_data.Be[2], 2);
 
-			float mag_r[3] = { _config_data.R[RElem::R_MAGX] / Be2,
-							  _config_data.R[RElem::R_MAGY] / Be2,
-							  _config_data.R[RElem::R_MAGZ] / Be2 };
+			float pos_r[3] = { _config_data.R[RElem::R_GPSPOSNORTH],
+							   _config_data.R[RElem::R_GPSPOSEAST],
+							   _config_data.R[RElem::R_GPSPOSDOWN]};
+			float vel_r[3] = { _config_data.R[RElem::R_GPSVELNORTH],
+							   _config_data.R[RElem::R_GPSVELEAST],
+							   _config_data.R[RElem::R_GPSVELDOWN]};
+			float mag_r[3] = { _config_data.R[RElem::R_MAGX] /*/ Be2*/,
+							  _config_data.R[RElem::R_MAGY] /*/ Be2*/,
+							  _config_data.R[RElem::R_MAGZ] /*/ Be2*/ };
 			float acc_q[3] = { _config_data.Q[QElem::Q_ACCELX],
 							   _config_data.Q[QElem::Q_ACCELY],
 							   _config_data.Q[QElem::Q_ACCELZ] };
@@ -81,50 +87,53 @@ public:
 			float gyro_biasq[3] = { _config_data.Q[QElem::Q_GYRODRIFTX],
 								   _config_data.Q[QElem::Q_GYRODRIFTY],
 								   _config_data.Q[QElem::Q_GYRODRIFTZ] };
+			INSSetPosVelVar(pos_r, vel_r);
             INSSetMagVar(mag_r);
+            INSSetBaroVar(_config_data.R[RElem::R_BAROZ]);
             INSSetAccelVar(acc_q);
             INSSetGyroVar(gyro_q);
             INSSetGyroBiasVar(gyro_biasq);
-            INSSetBaroVar(_config_data.R[RElem::R_BAROZ]);
 		}
         print_init_noise_matrix();
 		// 2. call filter functions 
 		// & evaluate states
-		size_t data_len = _data["dT"].size();
-		for (auto i = 0; i < data_len; i++) {
+		size_t data_len = 1;//_data["dT"].size();
+		for (size_t i = 0; i < data_len; i++) {
             // 2.1 state prediction
             // prepare sensors
+			// Note: fields below must be parsed!
+			// or will core dump
 			float gyro[3] = {
-				_data["gx"][i].second, 
-				_data["gy"][i].second,
-			    _data["gz"][i].second};
+				_data[LC_FIELD + "gx"][i].second, 
+				_data[LC_FIELD + "gy"][i].second,
+			    _data[LC_FIELD + "gz"][i].second};
 			float acc[3] = {
-			    _data["ax"][i].second,
-				_data["ay"][i].second,
-				_data["az"][i].second};
-			float dT = _data["dT"][i].second;
+			    _data[LC_FIELD + "ax"][i].second,
+				_data[LC_FIELD + "ay"][i].second,
+				_data[LC_FIELD + "az"][i].second};
+			float dT = _data[LC_FIELD + "dT"][i].second;
             float mag[3] = {
-                _data["mx"][i].second,
-                _data["my"][i].second,
-                _data["mz"][i].second
+                _data[LC_FIELD + "mx"][i].second,
+                _data[LC_FIELD + "my"][i].second,
+                _data[LC_FIELD + "mz"][i].second
             };
             float pos[3] = {
-                _data["GPSNorth"][i].second,
-                _data["GPSEast"][i].second,
-                _data["GPSDown"][i].second
+                _data[LC_FIELD + "GPSNorth"][i].second,
+                _data[LC_FIELD + "GPSEast"][i].second,
+                _data[LC_FIELD + "GPSDown"][i].second
             };
             float vel[3] = {
-                _data["GPSVelNorth"][i].second,
-                _data["GPSVelEast"][i].second,
-                _data["GPSVelDown"][i].second
+                _data[LC_FIELD + "GPSVelNorth"][i].second,
+                _data[LC_FIELD + "GPSVelEast"][i].second,
+                _data[LC_FIELD + "GPSVelDown"][i].second
             };
-            float baro = _data["Altitude"][i].second;
+            float baro = _data[LC_FIELD + "Altitude"][i].second;
 
             // evaluate
             // TODO: add title
             std::cout << "sensors:\n";
             print_input_sensors(acc, gyro,
-                mag, baro, pos, vel);
+                mag, &baro, pos, vel);
 			INSStatePrediction(gyro, acc, dT);
             // evaluate
             std::cout << "states prediction\n";
@@ -133,7 +142,7 @@ public:
             // 2.2 covariance prediction
             INSCovariancePrediction(dT);
             std::cout << "norse on prediction\n";
-            print_noise_vars(); // P prediction, Q R const
+            print_noise_matrix(); // P prediction, Q R const
 
             // 2.3 correction all
             uint16_t sensors = 0;
@@ -145,25 +154,27 @@ public:
                 _data["North"][i].second,
                 _data["East"][i].second,
                 _data["Down"][i].second
-            }
+            };
             float vel_e[3] = {
                 _data["NorthVel"][i].second,
                 _data["EastVel"][i].second,
                 _data["DownVel"][i].second
-            }
+            };
             float q_e[4] = {
                 _data["q1"][i].second,
                 _data["q2"][i].second,
                 _data["q3"][i].second,
                 _data["q4"][i].second,
-            }
+            };
             float gyro_bias_e[3] = {0.0, 0.0, 0.0};
+			/*
             std::cout << "expected state from log data:\n";
             print_state_vars(pos_e, vel_e, q_e, gyro_bias_e);
+			*/
             std::cout << "calculated after correction\n";
             print_state_vars(Nav.Pos, Nav.Vel, Nav.q, Nav.gyro_bias);
             std::cout << "norse after correction\n";
-            print_noise_vars(); // P prediction, Q R const
+            print_noise_matrix(); // P prediction, Q R const
 		}
 	    return;
 	}
@@ -197,20 +208,7 @@ private:
 	// K 13 * 10
 
     // helper functions to print intermediate variables
-	void print_matrix(float* data, const std::vector<size_t>& dim,
-            const std::string& title = "") {
-        if (!title.empty()) {
-            std::cout << "***" << title << "***\n";
-        }
-	    for (auto i = 0; i < dim.size(); i++) {
-			for (auto j = 0; j < dim[i]; j++) {
-				std::cout << data[i] << " ";
-			}
-			std::cout << std::endl;
-		}
-        return;
-	}
-    void print_matrix(float** data, const std::vector<size_t>& dim,
+    void print_matrix(float* data, const std::vector<size_t>& dim,
             const std::string& title = "") {
         if (dim.size() != 2) {
             std::cout << "dim size not correct\n";
@@ -221,7 +219,7 @@ private:
         }
         for (size_t i = 0; i < dim[0]; i++) {
             for (size_t j = 0; j < dim[1]; j++) {
-                std::cout << data[i][j] << " ";
+                std::cout << data[i * dim[1] + j] << " ";
             }
             std::cout << std::endl;
         }
@@ -232,8 +230,8 @@ private:
         if (!title.empty()) {
             std::cout << "***" << title << "***\n";
         }
-	    for (auto i = 0; i < dim; i++) {
-			for (auto j = 0; j < i; j++) {
+	    for (size_t i = 0; i < dim; i++) {
+			for (size_t j = 0; j < i; j++) {
 				std::cout << " ";
 			}
 			std::cout << data[i] << std::endl;
@@ -264,7 +262,7 @@ private:
         print_matrix(mag, {1, 3}, "magnetrometer");
         print_matrix(baro, {1, 1}, "barometer");
         print_matrix(GPS, {1, 3}, "gps");
-        print_matrix(baro, {1, 3}, "gps velocity");
+        print_matrix(GPSVel, {1, 3}, "gps velocity");
     } // u y
     /*
         extern struct EKFData {
@@ -283,18 +281,19 @@ private:
         } ekf;
      */
     void print_intermediate_vars() {
-        print_matrix(ekf.F, {13, 13}, "F matrix");
-        print_matrix(ekf.G, {13, 9}, "G matrix");
-        print_matrix(ekf.H, {10, 13}, "H matrix");
+        print_matrix(ekf.F[0], {13, 13}, "F matrix");
+        print_matrix(ekf.G[0], {13, 9}, "G matrix");
+        print_matrix(ekf.H[0], {10, 13}, "H matrix");
     } // FGH
     void print_noise_matrix() {
-        print_matrix(ekf.P, {13, 13}, "P matrix");
+        print_matrix(ekf.P[0], {13, 13}, "P matrix");
         print_matrix(ekf.Q, {1, 9}, "Q matrix");
         print_matrix(ekf.R, {1, 10}, "R matrix");
     } // PQR
     void print_kalman_gain() {}
 	// do filter StateEstimation/filterekf.c
 	bool _inited = false;
+	const std::string LC_FIELD = "filterstates:";
 	EKFConfiguration _config;
 	EKFConfiguration::DataFields _config_data;
 	HomeLocation _homelocation;

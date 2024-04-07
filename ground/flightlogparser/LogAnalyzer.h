@@ -19,7 +19,7 @@ namespace flightlogparser {
 class LogAnalyzer {
 public:
 	using DataType = 
-		std::map<std::string, std::vector<std::pair<size_t, double>>>;
+		std::map<std::string, std::vector<std::pair<size_t, float>>>;
 	bool init(const std::set<std::string>& obj_fields) {
 		_obj_fields.clear();
 		for (auto& obj_field: obj_fields) {

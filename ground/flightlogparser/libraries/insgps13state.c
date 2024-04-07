@@ -35,11 +35,6 @@
 #include <math.h>
 #include <stdint.h>
 
-// constants/macros/typdefs
-#define NUMX 13 // number of states, X is the state vector
-#define NUMW 9 // number of plant noise inputs, w is disturbance noise vector
-#define NUMV 10 // number of measurements, v is the measurement noise vector
-#define NUMU 6 // number of deterministic inputs, U is the input vector
 #pragma GCC optimize "O3"
 // Private functions
 void CovariancePrediction(float F[NUMX][NUMX], float G[NUMX][NUMW],
@@ -405,6 +400,7 @@ void INSCorrection(const float mag_data[3], const float Pos[3], const float Vel[
     SerialUpdate(ekf.H, ekf.R, Z, Y, ekf.P, ekf.X, SensorsUsed);
 
     float invqmag = invsqrtf(ekf.X[6] * ekf.X[6] + ekf.X[7] * ekf.X[7] + ekf.X[8] * ekf.X[8] + ekf.X[9] * ekf.X[9]);
+	printf("invqmag: %f", invqmag);
     ekf.X[6]  *= invqmag;
     ekf.X[7]  *= invqmag;
     ekf.X[8]  *= invqmag;

@@ -49,6 +49,12 @@
 
 #define FULL_SENSORS      0x3FF
 
+// constants/macros/typdefs
+#define NUMX 13 // number of states, X is the state vector
+#define NUMW 9 // number of plant noise inputs, w is disturbance noise vector
+#define NUMV 10 // number of measurements, v is the measurement noise vector
+#define NUMU 6 // number of deterministic inputs, U is the input vector
+
 /**
  * @}
  */

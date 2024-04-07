@@ -456,6 +456,7 @@ int main(int argc, char** argv) {
 		{"FILTERSTATES:North"},
 		{"FILTERSTATES:East"},
 		{"FILTERSTATES:Down"},
+		{"FILTERSTATES:Altitude"},
 	};
 	analyzer.init(table);
 	analyzer.process(parser->getObjectInfo(), logs);

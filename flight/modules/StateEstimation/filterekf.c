@@ -258,6 +258,7 @@ static filterResult filter(stateFilter *self, stateEstimation *state)
     }
 
     dT = PIOS_DELTATIME_GetAverageSeconds(&this->dtconfig);
+	// record
 	s.dT = dT;
 
     if (!this->inited && IS_SET(this->work.updated, SENSORUPDATES_mag) && IS_SET(this->work.updated, SENSORUPDATES_baro) && IS_SET(this->work.updated, SENSORUPDATES_pos)) {
