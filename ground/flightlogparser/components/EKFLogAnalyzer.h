@@ -51,6 +51,14 @@ public:
 			// init vars
 			_config_data = _config.getData();
 			_location_data = _homelocation.getData();
+			{
+				_location_data.Latitude = 312147396;
+				_location_data.Longitude = 1214073671;
+				_location_data.Altitude = 0;
+				_location_data.Be[0] = 26000;
+				_location_data.Be[1] = 400;
+				_location_data.Be[2] = 40000;
+			}
 			float magnorm[3] = { _location_data.Be[0], 
 				_location_data.Be[1], _location_data.Be[2] };
 			// print_diag(magnorm, 3);
@@ -94,11 +102,14 @@ public:
             INSSetGyroVar(gyro_q);
             INSSetGyroBiasVar(gyro_biasq);
 		}
+		// never set P use default in insgps13state.c
         print_init_noise_matrix();
+		print_noise_matrix();
 		// 2. call filter functions 
 		// & evaluate states
-		size_t data_len = 1;//_data["dT"].size();
+		size_t data_len = _data[LC_FIELD + "dT"].size();
 		for (size_t i = 0; i < data_len; i++) {
+			std::cout << "\n\n\n\n\n\n" << i << "st calculation\n";
             // 2.1 state prediction
             // prepare sensors
 			// Note: fields below must be parsed!
@@ -141,7 +152,7 @@ public:
 
             // 2.2 covariance prediction
             INSCovariancePrediction(dT);
-            std::cout << "norse on prediction\n";
+            std::cout << "noise on prediction\n";
             print_noise_matrix(); // P prediction, Q R const
 
             // 2.3 correction all
@@ -151,29 +162,27 @@ public:
             INSCorrection(mag, pos, vel, baro, sensors);
             // evaluate expected
             float pos_e[3] = {
-                _data["North"][i].second,
-                _data["East"][i].second,
-                _data["Down"][i].second
+                _data[LC_FIELD + "North"][i].second,
+                _data[LC_FIELD + "East"][i].second,
+                _data[LC_FIELD + "Down"][i].second
             };
             float vel_e[3] = {
-                _data["NorthVel"][i].second,
-                _data["EastVel"][i].second,
-                _data["DownVel"][i].second
+                _data[LC_FIELD + "NorthVel"][i].second,
+                _data[LC_FIELD + "EastVel"][i].second,
+                _data[LC_FIELD + "DownVel"][i].second
             };
             float q_e[4] = {
-                _data["q1"][i].second,
-                _data["q2"][i].second,
-                _data["q3"][i].second,
-                _data["q4"][i].second,
+                _data[LC_FIELD + "q1"][i].second,
+                _data[LC_FIELD + "q2"][i].second,
+                _data[LC_FIELD + "q3"][i].second,
+                _data[LC_FIELD + "q4"][i].second,
             };
             float gyro_bias_e[3] = {0.0, 0.0, 0.0};
-			/*
             std::cout << "expected state from log data:\n";
             print_state_vars(pos_e, vel_e, q_e, gyro_bias_e);
-			*/
             std::cout << "calculated after correction\n";
             print_state_vars(Nav.Pos, Nav.Vel, Nav.q, Nav.gyro_bias);
-            std::cout << "norse after correction\n";
+            std::cout << "noise after correction\n";
             print_noise_matrix(); // P prediction, Q R const
 		}
 	    return;

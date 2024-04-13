@@ -400,7 +400,6 @@ void INSCorrection(const float mag_data[3], const float Pos[3], const float Vel[
     SerialUpdate(ekf.H, ekf.R, Z, Y, ekf.P, ekf.X, SensorsUsed);
 
     float invqmag = invsqrtf(ekf.X[6] * ekf.X[6] + ekf.X[7] * ekf.X[7] + ekf.X[8] * ekf.X[8] + ekf.X[9] * ekf.X[9]);
-	printf("invqmag: %f", invqmag);
     ekf.X[6]  *= invqmag;
     ekf.X[7]  *= invqmag;
     ekf.X[8]  *= invqmag;

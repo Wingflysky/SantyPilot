@@ -282,6 +282,7 @@ int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
 			// see UAVObjectField for
 			memcpy((char*)&entry, buffer, obj_size);
 
+			/*
 			std::cout << "entry flight time: " << entry.FlightTime << std::endl;
 			std::cout << "entry object id: " << entry.ObjectID << std::endl;
 			std::cout << "entry flight: " << entry.Flight << std::endl;
@@ -293,6 +294,7 @@ int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
 					  << (entry.Type == DebugLogEntry::TYPE_TEXT) << "-text "
 					  << (entry.Type == DebugLogEntry::TYPE_UAVOBJECT) << "-uavo "
 					  << (entry.Type == DebugLogEntry::TYPE_MULTIPLEUAVOBJECTS) << "-mul\n";
+					  */
 			// next cycle		  
 			lognum++;
 
@@ -411,7 +413,7 @@ int main(int argc, char** argv) {
 	down_sample_rate = (down_sample_rate != 0) ? down_sample_rate : 1;
 	CtrlInfo info;
 	info.type = TOP_K;
-	info.amount = 100;
+	info.amount = 3000;
 	// 2. write read check equal
 	// check_data_file();
 	// 3. parse args
@@ -456,7 +458,14 @@ int main(int argc, char** argv) {
 		{"FILTERSTATES:North"},
 		{"FILTERSTATES:East"},
 		{"FILTERSTATES:Down"},
+		{"FILTERSTATES:NorthVel"},
+		{"FILTERSTATES:EastVel"},
+		{"FILTERSTATES:DownVel"},
 		{"FILTERSTATES:Altitude"},
+		{"FILTERSTATES:q1"},
+		{"FILTERSTATES:q2"},
+		{"FILTERSTATES:q3"},
+		{"FILTERSTATES:q4"},
 	};
 	analyzer.init(table);
 	analyzer.process(parser->getObjectInfo(), logs);
