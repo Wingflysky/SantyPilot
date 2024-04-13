@@ -1,7 +1,7 @@
 /**
  * @file: ExtendedDebugLogEntry.h
  * @brief: extended func for debuglogentry impl
- * @author: zhangxin@santypilot
+ * @author: santypilot
  * @date: 2024-2-28
  */
 #include "ExtendedDebugLogEntry.h"

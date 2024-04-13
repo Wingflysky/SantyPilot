@@ -1,19 +1,18 @@
 /*
  * @brief: a simple argument parser implementation
- * @author: zhangxin
+ * @author: santypilot 
  * @date: 2024-3-26
  */
-#ifndef _IS_ARG_PARSE_H
-#define _IS_ARG_PARSE_H
+#ifndef _STY_ARG_PARSE_H
+#define _STY_ARG_PARSE_H
 
 #include <iostream>
 #include <string>
 #include <vector>
 #include <map>
-#include "ISUtils.h"
 
-namespace ISUtils {
-class EXPORT_ISUTILS_ABI Argument {
+namespace components {
+class Argument {
 public:    
     Argument(const std::string& name = "--INVALID_ARG") :
         _required(false), _names({ name }) {}
@@ -39,6 +38,7 @@ public:
         auto raw = prepare_values("0");
         return std::stoul(raw); 
     }
+	/*
     template<> std::string get_values<std::string>();
     template<> double get_values<double>();
     template<> int32_t get_values<int32_t>();
@@ -46,6 +46,7 @@ public:
     template<> std::vector<double> get_values<std::vector<double>>();
     template<> std::vector<int32_t> get_values<std::vector<int32_t>>();
     template<> std::vector<std::string> get_values<std::vector<std::string>>();
+	*/
 
     Argument& set_desc(const std::string& desc) {
         _desc = desc;
@@ -96,10 +97,68 @@ private:
     std::string _desc;
 };
 
-class EXPORT_ISUTILS_ABI ArgumentParser {
+//--- Argument
+template<>
+std::string Argument::get_values<std::string>() { // std::string
+    auto raw = prepare_values("0");
+    return raw;
+}
+
+template<>
+double Argument::get_values<double>() { // double
+    auto raw = prepare_values("0.0");
+    return std::stod(raw);
+}
+template<>
+int32_t Argument::get_values<int32_t>() { // int32_t
+    auto raw = prepare_values("0");
+    return std::stoi(raw);
+}
+template<> // std::vector<uint64_t>
+std::vector<size_t> Argument::get_values<std::vector<size_t>>() {
+    std::vector<std::string> weak = { "0" };
+    auto raw = prepare_values(weak);
+    std::vector<size_t> ret;
+    ret.resize(raw.size());
+    for (size_t i = 0; i < raw.size(); i++) {
+        ret[i] = stoul(raw[i]);
+    }
+    return ret;
+}
+template<> // std::vector<double>
+std::vector<double> Argument::get_values<std::vector<double>>() {
+    std::vector<std::string> weak = { "0" };
+    auto raw = prepare_values(weak);
+    std::vector<double> ret;
+    ret.resize(raw.size());
+    for (size_t i = 0; i < raw.size(); i++) {
+        ret[i] = stod(raw[i]);
+    }
+    return ret;
+}
+template<> // std::vector<int32_t>
+std::vector<int32_t> Argument::get_values<std::vector<int32_t>>() {
+    std::vector<std::string> weak = { "0" };
+    auto raw = prepare_values(weak);
+    std::vector<int32_t> ret;
+    ret.resize(raw.size());
+    for (size_t i = 0; i < raw.size(); i++) {
+        ret[i] = stoi(raw[i]); // TODO: opt this
+    }
+    return ret;
+}
+template<> // std::vector<std::string>
+std::vector<std::string> Argument::get_values<std::vector<std::string>>() {
+    std::vector<std::string> weak = { "0" };
+    auto raw = prepare_values(weak);
+    return raw;
+}
+
+
+class ArgumentParser {
 public:
 	// not support implicit convert
-	explicit ArgumentParser(std::string name = "INTESIM_ARG_PARSER") : _name(name) {
+	explicit ArgumentParser(std::string name = "SANTYPILOT_ARG_PARSER") : _name(name) {
         _argument_list.resize(MAX_ARGS_NUM + 1/* --help */);
         add_argument("-h", "--help");
     }
@@ -144,6 +203,6 @@ private:
     std::vector<Argument> _argument_list;
     size_t _cur_idx = 0;
 };
-} // ISUtils
+} // components 
 
-#endif // _IS_ARG_PARSE_H
+#endif // _STY_ARG_PARSE_H

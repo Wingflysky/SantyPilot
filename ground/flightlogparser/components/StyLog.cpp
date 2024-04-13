@@ -1,13 +1,20 @@
 /**
- * @file: ISLog.cpp
+ * @file: StyLog.cpp
  * @brief log support
  * @author zhangxin
  * @date 2023-2-29
  */
-#include "ISLog.h"
+#include "StyLog.h"
 #include "string.h"
 
-namespace ISUtils {
+namespace components {
+	// c++11 can not call ctor directly
+	const LogMessage& initLogMessage(const char* file, int line, 
+		LogSeverity severity) {
+	    LogMessage msg(file, line, severity);
+		return msg;
+	}
+
     std::mutex LogMessage::g_log_mtx;
 
     LogMessage::LogMessage(const char* file, int line, LogSeverity severity):
@@ -21,7 +28,7 @@ namespace ISUtils {
         data_->outvec_ = nullptr;
 
         const auto now = std::chrono::system_clock::now();
-        time_ = ISUtils::ISTime(now);
+        time_ = components::StyTime(now);
 
         data_->num_chars_to_log_ = 0;
         data_->num_chars_to_syslog_ = 0;
@@ -63,4 +70,4 @@ namespace ISUtils {
     }
 
 
-} // ISUtils
+} // components

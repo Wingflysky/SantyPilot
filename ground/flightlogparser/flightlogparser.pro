@@ -167,10 +167,17 @@ UAVOBJS = \
 include(flightlogparser.pri)
 
 INCLUDE_DIRECTORIES += \
-	$${ROOT_DIR}/ground/flightlogparser/libraries/inc
+	$${ROOT_DIR}/ground/flightlogparser/libraries/inc \
+	$$(ROOT_DIR)/ground/flightlogparser/components \
+	$$(ROOT_DIR)/ground/flightlogparser/uavobject \
 
 SOURCES += main.cpp \
-	ExtendedDebugLogEntry.cpp \
+	components/ExtendedDebugLogEntry.cpp \
+	components/StyArgParser.cpp \
+	components/StyIO.cpp \
+	components/StyLog.cpp \
+	components/StyString.cpp \
+	components/StyTime.cpp \
     uavobjectparser.cpp \
     uavobject.cpp \
     uavmetaobject.cpp \
@@ -180,8 +187,14 @@ SOURCES += main.cpp \
 	libraries/insgps13state.c \
 	libraries/CoordinateConversions.c \
 
-HEADERS += uavobjectparser.h \
-	ExtendedDebugLogEntry.h \
+HEADERS += \
+	components/ExtendedDebugLogEntry.h \
+	components/StyArgParser.h \
+	components/StyIO.h \
+	components/StyLog.h \
+	components/StyString.h \
+	components/StyTime.h \
+    uavobjectparser.h \
     uavobjects_global.h \
     uavobject.h \
     uavmetaobject.h \

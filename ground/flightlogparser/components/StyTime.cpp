@@ -1,13 +1,13 @@
 /**
- * @file: ISTime.cpp
- * @brief intesim clock support: >=C++11
- * @author zhangxin
+ * @file: StyTime.cpp
+ * @brief clock support: >=C++11
+ * @author santypilot 
  * @date 2023-2-29
  */
-#include "ISTime.h"
+#include "StyTime.h"
 
-namespace ISUtils {
-ISTime::ISTime(std::chrono::system_clock::time_point now)
+namespace components {
+StyTime::StyTime(std::chrono::system_clock::time_point now)
     : timestamp_{ now } {
     std::time_t timestamp = std::chrono::system_clock::to_time_t(now);
     usecs_ = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -23,4 +23,4 @@ ISTime::ISTime(std::chrono::system_clock::time_point now)
         std::chrono::hours(isdst ? 1 : 0));
 }
 
-} // ISUtils
+} // components

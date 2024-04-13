@@ -41,8 +41,8 @@
 #include <set>
 #include <iomanip>
 #include "debuglogentry.h"
-#include "ExtendedDebugLogEntry.h"
-#include "EKFLogAnalyzer.h"
+#include "components/ExtendedDebugLogEntry.h"
+#include "components/EKFLogAnalyzer.h"
 #include "uavobjectmanager.h"
 #include "uavobjectsinit.h"
 #include "uavobjectparser.h"

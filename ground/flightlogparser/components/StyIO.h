@@ -1,17 +1,16 @@
 /**
- * @file: ISIO.h
+ * @file: STYIO.h
  * @brief io support, cross-platform support
  * @author zhangxin
  * @date 2023-3-11
  */
 
-#ifndef _IS_IO_H
-#define _IS_IO_H
-#include "ISUtils.h"
+#ifndef _STY_IO_H
+#define _STY_IO_H
 #include <string>
 #include <fstream>
 
-namespace ISUtils {
+namespace components {
 	struct IOContext {
 		std::string filename;
 	};
@@ -33,7 +32,7 @@ namespace ISUtils {
 	};
 
 	// TODO: not finished
-	class EXPORT_ISUTILS_ABI TextFileFormat : public FileFormat {
+	class TextFileFormat : public FileFormat {
 	public:	
 		TextFileFormat() = default;
 		virtual ~TextFileFormat();
@@ -46,7 +45,7 @@ namespace ISUtils {
 	};
 
 	// TODO: bin format
-	class EXPORT_ISUTILS_ABI BinFileFormat : public FileFormat {
+	class BinFileFormat : public FileFormat {
 	public:
 		BinFileFormat() = default;
 		virtual ~BinFileFormat();
@@ -56,7 +55,7 @@ namespace ISUtils {
 	private:
 		static const size_t BLOCK_SIZE = 1024; // 1KB
 	};
-} // ISUtils
+} // components 
 
-#endif // _IS_IO_H
+#endif // _STY_IO_H
 

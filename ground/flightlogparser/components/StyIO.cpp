@@ -1,16 +1,17 @@
 /**
- * @file: ISIO.h
+ * @file: StyIO.h
  * @brief io implementation, cross-platform support
  * @author zhangxin
  * @date 2023-3-28
  */
-#include "ISIO.h"
-#include "ISString.h"
-#include "ISLog.h"
 #include <fstream>
-#include "ISSystemOps.h"
+#include <string.h> // memcpy
+#include "StyIO.h"
+#include "StyString.h"
+#include "StyLog.h"
+#include "StySystemOps.h"
 
-namespace ISUtils {
+namespace components {
 FileFormat::~FileFormat() {
 	if (!_fs.is_open()) {
 		return;
@@ -55,7 +56,7 @@ void TextFileFormat::read(char* buffer, size_t& len) {
 		lines.push_back(raw);
 	}
 	_fs.seekg(0); // rewind 
-	auto ret = ISUtils::join_string(lines, '\n');
+	auto ret = components::join_string(lines, '\n');
 	len = ret.size();
 	memcpy(buffer, &ret[0], len);
 }
@@ -120,4 +121,4 @@ void BinFileFormat::write(const char* buffer, const size_t& len) {
 	return;
 }
 
-}
+} // components

@@ -1,46 +1,45 @@
 /**
- * @file: ISLog.h 
+ * @file: StyLog.h 
  * @brief log support, 
  * simple implementation of glog
  * refer to: https://github.com/google/glog
- * @author zhangxin
+ * @author santypilot 
  * @date 2023-2-29
  */
-#ifndef _IS_LOG_H
-#define _IS_LOG_H
+#ifndef _STY_LOG_H
+#define _STY_LOG_H
 
 #include <ostream>
 #include <fstream>
 #include <iomanip>
-#include "ISUtils.h"
-#include "ISIO.h"
-#include "ISTime.h"
+#include "StyIO.h"
+#include "StyTime.h"
 #include <mutex> // std::mutex
 #include <iostream>
 #include <thread>
 #include <vector>
 
-#define LOG(severity) COMPACT_IS_LOG_##severity.stream()
+#define LOG(severity) COMPACT_STY_LOG_##severity.stream()
 
-#define COMPACT_IS_LOG_INFO ISUtils::LogMessage::LogMessage(__FILE__, __LINE__, ISUtils::LogSeverity::ISLOG_INFO)
-#define COMPACT_IS_LOG_WARNING ISUtils::LogMessage::LogMessage(__FILE__, __LINE__, ISUtils::LogSeverity::ISLOG_WARNING)
-#define COMPACT_IS_LOG_ERROR ISUtils::LogMessage::LogMessage(__FILE__, __LINE__, ISUtils::LogSeverity::ISLOG_ERROR)
-#define COMPACT_IS_LOG_FATAL ISUtils::LogMessage::LogMessage(__FILE__, __LINE__, ISUtils::LogSeverity::ISLOG_FATAL)
+#define COMPACT_STY_LOG_INFO components::initLogMessage(__FILE__, __LINE__, components::LogSeverity::STYLOG_INFO)
+#define COMPACT_STY_LOG_WARNING components::initLogMessage(__FILE__, __LINE__, components::LogSeverity::STYLOG_WARNING)
+#define COMPACT_STY_LOG_ERROR components::initLogMessage(__FILE__, __LINE__, components::LogSeverity::STYLOG_ERROR)
+#define COMPACT_STY_LOG_FATAL components::initLogMessage(__FILE__, __LINE__, components::LogSeverity::STYLOG_FATAL)
 
 #define ENABLE_LOG_FILE // TODO: add this to global config!!!
 #ifdef ENABLE_LOG_FILE
     #define LOGFILE_PATH "C:\\Users\\intesim\\Desktop\\islog.txt"
 #endif // ENABLE_LOG_FILE
 
-namespace ISUtils {
+namespace components {
 const size_t LOG_MSG_MAX_LEN = 30000;
 
 
 enum LogSeverity {
-	ISLOG_INFO = 0,
-	ISLOG_WARNING,
-	ISLOG_ERROR,
-	ISLOG_FATAL
+	STYLOG_INFO = 0,
+	STYLOG_WARNING,
+	STYLOG_ERROR,
+	STYLOG_FATAL
 };
 class LogStreamBuf: public std::streambuf {
 public:
@@ -65,14 +64,14 @@ public:
     LogStream(LogStream&& other) noexcept
         : std::ostream(nullptr),
         streambuf_(std::move(other.streambuf_)),
-        ctr_(std::exchange(other.ctr_, 0)),
+        ctr_(other.ctr_),
         self_(this) {
         rdbuf(&streambuf_);
     }
 
     LogStream& operator=(LogStream&& other) noexcept {
         streambuf_ = std::move(other.streambuf_);
-        ctr_ = std::exchange(other.ctr_, 0);
+        ctr_ = other.ctr_;
         rdbuf(&streambuf_);
         return *this;
     }
@@ -123,7 +122,7 @@ struct LogMessageData {
 };
 
 
-class EXPORT_ISUTILS_ABI LogMessage {
+class LogMessage {
 public:
     LogMessage(const char* file, int line, LogSeverity severity);
 
@@ -135,7 +134,7 @@ public:
         delete data_;
     };
 
-    std::ostream& stream() { return data_->stream_; }
+    std::ostream& stream() const { return data_->stream_; }
 protected :
     void Init(const char* file, int line, LogSeverity severity);
 
@@ -172,12 +171,15 @@ private:
     // We keep the data in a separate struct so that each instance of
     // LogMessage uses less stack space.
     LogMessageData* data_;
-    ISTime time_;
+    StyTime time_;
     static std::mutex g_log_mtx;
 };
 
-} // ISUtils
+const LogMessage& initLogMessage(const char* file, int line, 
+	LogSeverity severity);
+
+} // components
 
 
-#endif // _IS_LOG_H
+#endif // _STY_LOG_H
 

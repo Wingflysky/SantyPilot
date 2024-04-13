@@ -1,14 +1,14 @@
 /**
- * @file ISString.cpp
+ * @file STYString.cpp
  * string utils
- * @author: zhangxin
+ * @author: santypilot 
  * @date: 2024-1-29
  */
 #include <vector>
-#include "ISLog.h"
-#include "ISString.h"
+#include "StyLog.h"
+#include "StyString.h"
 
-namespace ISUtils {
+namespace components {
 	const std::string join_string(const std::vector<std::string>& list, char split) {
 		std::string ret = "";
 		for (auto i = 0; i < list.size(); i++) {
@@ -62,4 +62,4 @@ namespace ISUtils {
 		ret = raw.substr(st, ed - st + 1);
 		return ret;
 	}
-}
+} // components

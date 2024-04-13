@@ -1,12 +1,11 @@
 /**
- * @file: ISTime.h
- * @brief intesim clock support: >=C++11
- * @author zhangxin
+ * @file: StyTime.h
+ * @brief clock support: >=C++11
+ * @author santypilot 
  * @date 2023-2-29
  */
-#ifndef _IS_TIME_H
-#define _IS_TIME_H
-#include "ISUtils.h"
+#ifndef _STY_TIME_H
+#define _STY_TIME_H
 #include <ctime>
 #include <chrono>
 
@@ -14,18 +13,18 @@
  * usage:
  *  std::stringstream ss;
  *  const auto now = std::chrono::system_clock::now();
- *  auto time = ISUtils::ISTime(now);
+ *  auto time = components::ISTime(now);
  *  ss << '[' << std::setw(2) << 1 + time.month() << std::setw(2) << time.day() << ' '
  *      << std::setw(2) << time.hour() << ':' << std::setw(2) << time.min()
  *      << ':' << std::setw(2) << time.sec() << "." << std::setw(6)
  *      << time.usec() << "] ";
  *  ss.str();
  */
-namespace ISUtils {
-class EXPORT_ISUTILS_ABI ISTime {
+namespace components {
+class StyTime {
 public:
-    ISTime() = default;
-    explicit ISTime(std::chrono::system_clock::time_point now);
+    StyTime() = default;
+    explicit StyTime(std::chrono::system_clock::time_point now);
 
     const std::chrono::system_clock::time_point& when() const noexcept {
         return timestamp_;
@@ -52,6 +51,6 @@ private:
     std::chrono::seconds gmtoffset_;
 };
 
-} // ISUtils
+} // components
 
-#endif // _IS_TIME_H
+#endif // _STY_TIME_H
