@@ -178,6 +178,7 @@ SOURCES += main.cpp \
 	components/StyLog.cpp \
 	components/StyString.cpp \
 	components/StyTime.cpp \
+	components/StyConfiguration.cpp \
     uavobjectparser.cpp \
     uavobject.cpp \
     uavmetaobject.cpp \
@@ -194,6 +195,7 @@ HEADERS += \
 	components/StyLog.h \
 	components/StyString.h \
 	components/StyTime.h \
+	components/StyConfiguration.h \
     uavobjectparser.h \
     uavobjects_global.h \
     uavobject.h \

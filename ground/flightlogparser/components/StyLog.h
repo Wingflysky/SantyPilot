@@ -26,7 +26,7 @@
 #define COMPACT_STY_LOG_ERROR components::initLogMessage(__FILE__, __LINE__, components::LogSeverity::STYLOG_ERROR)
 #define COMPACT_STY_LOG_FATAL components::initLogMessage(__FILE__, __LINE__, components::LogSeverity::STYLOG_FATAL)
 
-#define ENABLE_LOG_FILE // TODO: add this to global config!!!
+// #define ENABLE_LOG_FILE // TODO: add this to global config!!!
 #ifdef ENABLE_LOG_FILE
     #define LOGFILE_PATH "C:\\Users\\intesim\\Desktop\\islog.txt"
 #endif // ENABLE_LOG_FILE
@@ -59,6 +59,7 @@ public:
     LogStream(char* buf, int len, int64_t ctr)
         : std::ostream(nullptr), streambuf_(buf, len), ctr_(ctr), self_(this) {
         rdbuf(&streambuf_);
+		ctr = 0;
     }
 
     LogStream(LogStream&& other) noexcept
@@ -67,6 +68,7 @@ public:
         ctr_(other.ctr_),
         self_(this) {
         rdbuf(&streambuf_);
+		other.ctr_ = 0;
     }
 
     LogStream& operator=(LogStream&& other) noexcept {

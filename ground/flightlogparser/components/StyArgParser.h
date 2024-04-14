@@ -173,6 +173,7 @@ public:
 		parse_args({ argv, argv + argc });
 	}
     void parse_args(const std::vector<std::string>& arguments);
+	void parse_xml(const std::string& xml);
     // Note: only support string input!
     template<typename... T>
     Argument& add_argument(const std::string& name, const T&... names) {

@@ -2,9 +2,8 @@
  ******************************************************************************
  *
  * @file       main.cpp
- * @author     The LibrePilot Project, http://www.librepilot.org Copyright (C) 2015-2017.
- *             The OpenPilot Team, http://www.openpilot.org Copyright (C) 2010.
- * @brief      UAVObjectGenerator main.
+ * @author     The SantyPilot Project, http://www.librepilot.org Copyright (C) 2015-2017.
+ * @brief      offline flightlog parser main.
  *
  * @see        The GNU Public License (GPL) Version 3
  *
@@ -20,9 +19,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include <QtCore/QCoreApplication>
 #include <QDir>
@@ -43,6 +39,7 @@
 #include "debuglogentry.h"
 #include "components/ExtendedDebugLogEntry.h"
 #include "components/EKFLogAnalyzer.h"
+#include "components/StyConfiguration.h"
 #include "uavobjectmanager.h"
 #include "uavobjectsinit.h"
 #include "uavobjectparser.h"
@@ -56,24 +53,9 @@
 
 using santypilot_gcs::flightlogparser::ExtendedDebugLogEntry;
 using santypilot_gcs::flightlogparser::EKFLogAnalyzer;
-/**
- * entrance
- */
-const std::string LOGS_DIR = "/home/santy/source/SantyPilot/logs/";
-const std::string XML_DIR = "/home/santy/source/SantyPilot/shared/uavobjectdefinition";
-const size_t ANA_NUM_POINTS = 1000;
+
 UAVObjectManager g_mgr;
-
-enum FILTER_TYPE {
-    TOP_K = 0,
-	DOWN_SAMPLE,
-	UNKNOWN_TYPE
-};
-
-struct CtrlInfo {
-    FILTER_TYPE type;
-	size_t amount;
-};
+std::map<std::string, std::string> g_opts;
 
 void objectFilename(uint32_t obj_id, uint16_t obj_inst_id, uint8_t *filename) {
     uint32_t prefix = obj_id + (obj_inst_id / 256) * 16; 
@@ -82,117 +64,6 @@ void objectFilename(uint32_t obj_id, uint16_t obj_inst_id, uint8_t *filename) {
 	// uint32_t prefix = obj_id;
 	// uint8_t suffix = (obj_inst_id / 256) * 16;
     snprintf((char *)filename, 13, "%08X.o%02X", prefix, suffix);
-}
-
-std::vector<std::string> split(const std::string& s, char c) {
-	std::vector<std::string> ret;
-	int32_t idx = 0;
-	while (true) {
-		size_t lidx = idx;
-		idx = s.find_first_of(c, idx);
-		if (idx == -1) {
-			break;
-		}
-		auto sub = s.substr(lidx, idx - lidx);
-		ret.emplace_back(std::move(sub));
-		idx++;
-	}
-	return ret;
-}
-
-/*
-std::vector<std::string> file_list(const std::string& dir) {
-	std::string command = "ls " + dir;
-	std::vector<std::string> ret;
-	int pipefd[2];
-	if (pipe(pipefd) == -1) {
-		std::cout << "Failed to create pipe." << std::endl;
-		return ret;
-	}
-
-	pid_t pid = fork();
-	if (pid == -1) {
-	    std::cout << "Fork failed." << std::endl;
-		close(pipefd[0]);
-		close(pipefd[1]);
-		return ret;
-	} else if (pid > 0) { // parent
-	    close(pipefd[1]); // close write side
-		const size_t LEN = 100 * 1024; // 100K
-		char buffer[LEN];
-		size_t bytes;
-		while ((bytes = read(pipefd[0],
-				   			 buffer,
-							 sizeof(buffer))) != 0) {
-			// std::cout.write(buffer, bytes);
-			std::string str(buffer);
-			auto list = split(str, '\n');
-			//for (auto& file: list) {
-			//    std::cout << "filename len: " << 
-			//	file.size() << " " << file << std::endl;
-			//}
-			return list;
-		}
-		close(pipefd[0]);
-	} else { // child
-		dup2(pipefd[1], STDOUT_FILENO);
-		close(pipefd[0]);
-		close(pipefd[1]);
-		auto rcode = system(command.c_str());
-		exit(rcode);
-	}
-	return ret;
-}
-*/
-
-#define TEST_LOG_FN "test.bin"
-struct Data {
-    size_t idx;
-	// std::vector<std::string> list; // take care of mem management
-	double hight;
-};
-
-void check_data_file() {
-	Data data;
-	data.idx = 243;
-	data.hight = 12.76;
-	// data.list = {"xyz", "ab"};
-	Data data1 = data;
-	std::cout << "data size: " << sizeof(data) << " bytes\n"; // same as file!
-	size_t len = sizeof(data);
-	char buffer[len];
-	memcpy(buffer, (char*)(&data), len);
-	std::cout << "opening...\n";
-	FILE *fptr = fopen(TEST_LOG_FN, "wb+");
-    std::cout << "reading...\n";
-	size_t bytes = fwrite(buffer, sizeof(char), len, fptr);
-	if (bytes != len) {
-		std::cout << "actually write " << bytes << " expect " << len << std::endl;
-	}
-
-	// set cursor position!
-	fseek(fptr, 0, SEEK_SET);
-
-	size_t b = fread(buffer, sizeof(char), len, fptr);
-	std::cout << "checking...\n";
-	if (b != len) {
-	    std::cout << "write and should get " << len << 
-			" but get " << b << " bytes\n";
-		return;
-	} else {
-	    std::cout << "read write size equals: " << b << std::endl;
-	}
-	memcpy((char*)(&data1), buffer, len);
-
-	std::cout << "comparing...\n";
-	if (data1.idx == data.idx &&
-			data1.hight == data.hight) {
-		std::cout << "check pass\n";
-	} else {
-	    std::cout << "check failed\n";
-	}
-	std::cout << "closing...\n";
-	fclose(fptr);
 }
 
 /* read parse and output functions */
@@ -205,7 +76,7 @@ int32_t load_obj(const std::string& dir,
 
     // Get filename
     objectFilename(obj_id, obj_inst_id, filename);
-	std::cout << "loading output object from file " << filename << std::endl;
+	// std::cout << "loading output object from file " << filename << std::endl;
 
     // Open file
 	const std::string fullpath = dir + "/" + 
@@ -227,9 +98,21 @@ int32_t load_obj(const std::string& dir,
     return 0;
 }
 
+enum FILTER_TYPE {
+    TOP_K = 0,
+	DOWN_SAMPLE,
+	UNKNOWN_TYPE
+};
+
+struct CtrlInfo {
+    FILTER_TYPE type;
+	size_t amount;
+};
+
+
 int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
 		const CtrlInfo& info) {
-	const std::string dir = LOGS_DIR;
+	const std::string dir = g_opts["InputDirectory:LogDir"];
 	uint16_t flightnum = 0;
 	// auto files = file_list(dir);
 	uint16_t lognum = 0; // mock
@@ -244,6 +127,7 @@ int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
 	uint16_t obj_size = sizeof(DebugLogEntry::DataFields);
 
 	// init output csv file
+	bool en_output = g_opts["Output:Enable"] == "true";
 	auto now = std::chrono::system_clock::now();
 	auto now_time_t = std::chrono::system_clock::to_time_t(now);
 	std::tm* local_time = std::localtime(&now_time_t);
@@ -252,12 +136,11 @@ int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
 	std::string current_time = time_stream.str();
     QFile csvFile(QString::fromStdString(current_time));
 
-	std::cout << "init output file " << current_time << std::endl;
-	if (!csvFile.open(QFile::WriteOnly | QFile::Truncate)) {
+	// std::cout << "init output file " << current_time << std::endl;
+	if (en_output && !csvFile.open(QFile::WriteOnly | QFile::Truncate)) {
 		std::cout << "failed to open output file\n";
 		return -1;
 	}
-	std::cout << "succeed to open file " << current_time << std::endl;
 	QTextStream csvStream(&csvFile);
 	quint32 baseTime = 0;
 	// quint32 currentFlight = 0;
@@ -301,7 +184,9 @@ int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
 			// log output entry
 			ExtendedDebugLogEntry* ex_entry = new ExtendedDebugLogEntry;
 			ex_entry->setData(entry, &g_mgr);
-			ex_entry->toCSV(&csvStream, baseTime);
+			if (en_output) {
+				ex_entry->toCSV(&csvStream, baseTime);
+			}
 			
 			if (DebugLogEntry::TYPE_MULTIPLEUAVOBJECTS == ex_entry->getType()) {
 				const quint32 total_len  = sizeof(DebugLogEntry::DataFields);
@@ -326,7 +211,9 @@ int32_t read_parse_uavo_log(std::vector<ExtendedDebugLogEntry*>& logs,
 						memcpy(&fields, &tmp, toread);
 						ExtendedDebugLogEntry* subEntry = new ExtendedDebugLogEntry;
 						subEntry->setData(fields, &g_mgr);
-						subEntry->toCSV(&csvStream, baseTime);
+						if (en_output) {
+							ex_entry->toCSV(&csvStream, baseTime);
+						}
 					    // logs.emplace_back(subEntry);
 						delete subEntry;
 					}
@@ -382,7 +269,7 @@ void freeExtendedDebugLogEntry(std::vector<ExtendedDebugLogEntry*>& logs) {
 std::string read_content(const std::string& filename) {
 	FILE *fptr = fopen(filename.c_str(), "rb");
 	if (fptr == nullptr) {
-		std::cout << "open file " << filename << " failed\n";
+		// std::cout << "open file " << filename << " failed\n";
 	    return "";
 	}
 	const size_t BUFFER_SIZE = 1024 * 5;
@@ -394,81 +281,71 @@ std::string read_content(const std::string& filename) {
 }
 
 int main(int argc, char** argv) {
-	// 1. file list: pipe has transfer data size limit
-	// auto files = file_list(LOGS_DIR);
-	// std::cout << "parsed file nums:" << 
-	//	files.size() << std::endl;
-	// std::cout << "first file:" <<
-	//	files.front() << std::endl;
-	// size_t down_sample_rate = files.size() / ANA_NUM_POINTS;
-
-	// another method for xml file
+	components::StyConfiguration config;
+	std::string fn = 
+		"/home/santy/source/SantyPilot/ground/flightlogparser/configuration.xml";
+	auto content = read_content(fn);
+	g_opts = config.parseXML(content);
+	/*
+	for (auto& kv: g_opts) {
+	    std::cout << kv.first << " " << kv.second << std::endl;
+	}
+	*/
+	// 1. collect file list
     QStringList filters     = QStringList("*.*");
-    QDir path = QDir(QString::fromStdString(LOGS_DIR));
+	std::string log_dir = g_opts["InputDirectory:LogDir"];
+    QDir path = QDir(QString::fromStdString(log_dir));
     path.setNameFilters(filters);
-    QFileInfoList files = path.entryInfoList();
-	std::cout << "get log file list: " << files.size() << std::endl;
+    QFileInfoList files = path.entryInfoList(); // sort
+	// std::cout << "get log file list: " << files.size() << std::endl;
 
-	size_t down_sample_rate = files.size() / ANA_NUM_POINTS;
+	size_t input_num = std::stoul(g_opts["Analyze:InputNum"]);
+	size_t down_sample_rate = files.size() / input_num;
 	down_sample_rate = (down_sample_rate != 0) ? down_sample_rate : 1;
 	CtrlInfo info;
-	info.type = TOP_K;
-	info.amount = 3000;
-	// 2. write read check equal
-	// check_data_file();
-	// 3. parse args
-	// parse and build ref trees
+	// TODO: use macro
+	info.type = g_opts["Analyze:InputType"] == "TOPK" ? TOP_K: DOWN_SAMPLE;
+	info.amount = input_num;
+	// 2. parse and build reference trees, used to parse logs
     filters     = QStringList("*.xml");
-    path = QDir(QString::fromStdString(XML_DIR));
+	auto xml_dir = g_opts["Analyze:XMLDir"];
+    path = QDir(QString::fromStdString(xml_dir));
     path.setNameFilters(filters);
     auto xmls = path.entryInfoList();
     UAVObjectParser *parser = new UAVObjectParser();
 	for (auto& xml: xmls) {
-		std::string fn = XML_DIR + "/" + xml.fileName().toStdString();
+		std::string fn = xml_dir + "/" + xml.fileName().toStdString();
 		auto xmlstr = read_content(fn);
 		auto status = parser->parseXML(xmlstr, fn);
 	}
 	auto sz = parser->getNumObjects();
-	std::cout << "num of objects: " << sz << std::endl;
-
-	// cycle read parse -> fill logEntry -> export csv
+	// std::cout << "num of objects: " << sz << std::endl;
 	UAVObjectsInitialize(&g_mgr);
-	// 4. collect logs
+	// 3. parse and collect logs
 	std::vector<ExtendedDebugLogEntry*> logs;
     read_parse_uavo_log(logs, info);
-	// 5. use logs: 
+	// 4. analyze logs 
+	bool en_analyze = g_opts["Analyze:Enable"] == "true";
+	if (!en_analyze) {
+	    return 0;
+	}
 	EKFLogAnalyzer analyzer;
-	std::set<std::string> table {
-		{"FILTERSTATES:GPSNorth"},
-		{"FILTERSTATES:GPSEast"},
-		{"FILTERSTATES:GPSDown"},
-		{"FILTERSTATES:GPSVelNorth"},
-		{"FILTERSTATES:GPSVelEast"},
-		{"FILTERSTATES:GPSVelDown"},
-		{"FILTERSTATES:dT"},
-		{"FILTERSTATES:gx"},
-		{"FILTERSTATES:gy"},
-		{"FILTERSTATES:gz"},
-		{"FILTERSTATES:ax"},
-		{"FILTERSTATES:ay"},
-		{"FILTERSTATES:az"},
-		{"FILTERSTATES:mx"},
-		{"FILTERSTATES:my"},
-		{"FILTERSTATES:mz"},
-		{"FILTERSTATES:North"},
-		{"FILTERSTATES:East"},
-		{"FILTERSTATES:Down"},
-		{"FILTERSTATES:NorthVel"},
-		{"FILTERSTATES:EastVel"},
-		{"FILTERSTATES:DownVel"},
-		{"FILTERSTATES:Altitude"},
-		{"FILTERSTATES:q1"},
-		{"FILTERSTATES:q2"},
-		{"FILTERSTATES:q3"},
-		{"FILTERSTATES:q4"},
-	};
+	std::set<std::string> table {};
+	std::string nsn = "Analyze:InputObject:Name";
+	std::string nsf = "Analyze:InputObject:Field";
+	size_t idx = 0;
+	while (true) {
+		auto key = nsf + std::to_string(idx);
+	    if (g_opts.count(key) <= 0) {
+		    break;
+		}
+		table.insert(g_opts[nsn] + ":" + g_opts[key]);
+		idx++;
+	}
 	analyzer.init(table);
 	analyzer.process(parser->getObjectInfo(), logs);
+	analyzer.analyze();
+	/*
 	const auto& data = analyzer.getData();
 	for (auto &kv: data) {
 		std::cout << kv.first << " data len: " << kv.second.size() << std::endl;
@@ -481,9 +358,8 @@ int main(int argc, char** argv) {
 			}
 		}
 	}
-	analyzer.analyze();
-	// show some sensors
-	// 6. free logs
+	*/
+	// 5. free mem
 	freeExtendedDebugLogEntry(logs);
 	return 0;
 }
