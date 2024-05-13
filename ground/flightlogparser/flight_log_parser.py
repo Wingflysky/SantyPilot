@@ -4,11 +4,11 @@ import sys
 import csv
 import os
 import matplotlib.pyplot as plt
-import scipy
 import xml.etree.ElementTree as ET
+from scipy.io import savemat
 
 # user configs
-flight_obj_dir = '/home/santy/source/SantyPilot/shared/uavobjectdefinition'
+flight_obj_dir = './shared/uavobjectdefinition'
 Flight = 1
 pnt_cnt = 100
 tag = 'North'
@@ -149,6 +149,7 @@ def main(args):
 			detail[name] = [fields]
 		else:
 			detail[name].append(fields)
+	savemat('./data.mat', detail)
 
 	if len(show_obj_fields) == 0:
 		for key in detail.keys():
