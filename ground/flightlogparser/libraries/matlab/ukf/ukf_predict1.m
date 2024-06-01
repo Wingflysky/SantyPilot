@@ -90,5 +90,5 @@ function [M,P,D] = ukf_predict1(M,P,f,Q,f_param,alpha,beta,kappa,mat)
   
   tr_param = {alpha beta kappa mat};
   [M,P,D] = ut_transform(M,P,f,f_param,tr_param);
-  % P = P + Q;
+  P = P + Q;
 

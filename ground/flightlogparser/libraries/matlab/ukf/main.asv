@@ -22,11 +22,10 @@ h_func = @ukf_track_h;
 %}
 %% Ins Simulation
 P = diag([25.0, 25.0, 25.0, 5.0, 5.0, 5.0, ...
-    1e-4, 1e-4, 1e-4, 1e-4, 1e-6, 1e-6, 1e-6]);
+    1e-5, 1e-5, 1e-5, 1e-5, 1e-6, 1e-6, 1e-6]);
 
-%Q = diag([1e-3, 1e-3, 1e-3, 3e-3, 3e-3, 3e-3, ...
-%    1e-6, 1e-6, 1e-6]);
-Q = P;
+Q = diag([1e-3, 1e-3, 1e-3, 3e-3, 3e-3, 3e-3, ...
+    1e-6, 1e-6, 1e-6]);
 
 R = diag([0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 10, ...
     10, 10, 0.01]);
@@ -52,9 +51,6 @@ error_idx=zeros(size(raIn,2),1);
 for i = 2 : n
     f_param = []; % prepare params
     f_param(1,1) = time(i)-time(i-1);
-    u(1,i) = u(1,i) - X(11) * 180 / 3.14159;
-    u(2,i) = u(2,i) - X(12) * 180 / 3.14159;
-    u(3,i) = u(3,i) - X(13) * 180 / 3.14159;
     f_param(1,2:7) = u(:,i)';
     [Xpre, Ppre] = ukf_predict1(X, P, f_func, Q, f_param, alpha, beta, kappa, mat);
     Zpre = ukf_track_h_ins(Xpre, hparam);
@@ -88,7 +84,7 @@ xyErr = xyOut - xyIn;
 raErr = raOut - raIn;
 
 %% plot---------------------------------------------------------------------
-index = [9,10];
+index = [11,12];
 figure(1);
 clf;
 subplot(2,1,1);
@@ -97,8 +93,8 @@ hold on;
 plot(xyOut(index(1),:), 'r', 'linewidth', 1.5);
 set(gca,'XGrid','on');
 set(gca,'YGrid','on');
-legend('EKF', 'UKF')
-ylabel('q2');
+legend('Measurement', 'Smoothed')
+ylabel('X:m');
 title('EKF-UKF');
 
 subplot(2,1,2);
@@ -107,17 +103,16 @@ hold on;
 plot(xyOut(index(2),:), 'r', 'linewidth', 1.5);
 set(gca,'XGrid','on');
 set(gca,'YGrid','on');
-legend('EKF', 'UKF')
-xlabel('time/0.005 sec');
-ylabel('q3');
+legend('Measurement', 'Smoothed')
+xlabel('time/0.048 sec');
+ylabel('Vx:m/s');
 
-indexm = [1,4];
 figure(2);
 clf;
 subplot(2,1,1);
-plot(raIn(indexm(1),:),'b');
+plot(raIn(1,:),'b');
 hold on;
-plot(raOut(indexm(1),:), 'r', 'linewidth', 1.5);
+plot(raOut(1,:), 'r', 'linewidth', 1.5);
 set(gca,'XGrid','on');
 set(gca,'YGrid','on');
 legend('Measurement', 'UKF')
@@ -125,13 +120,13 @@ ylabel('X:m');
 title('Measurement-UKF');
 
 subplot(2,1,2);
-plot(raIn(indexm(2),:), 'b');
+plot(raIn(4,:), 'b');
 hold on;
-plot(raOut(indexm(2),:), 'r', 'linewidth', 1.5);
+plot(raOut(4,:), 'r', 'linewidth', 1.5);
 set(gca,'XGrid','on');
 set(gca,'YGrid','on');
 legend('Measurement', 'UKF')
-xlabel('time/0.005 sec');
+xlabel('time/0.048 sec');
 ylabel('Vx:m/s');
 
 
