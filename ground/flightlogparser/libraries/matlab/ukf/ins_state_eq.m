@@ -3,6 +3,7 @@ ax = U(4); ay = U(5); az = U(6);
 wx = U(1) - X(11); wy = U(2) - X(12); wz = U(3) - X(13);
 q0 = X(7); q1 = X(8); q2 = X(9); q3 = X(10);
 % pdot = v
+Xdot = zeros(1, 13);
 Xdot(1) = X(4); Xdot(2) = X(5); Xdot(3) = X(6);
 % vdot = reb * a
 Xdot(4) = (q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3) * ax ...

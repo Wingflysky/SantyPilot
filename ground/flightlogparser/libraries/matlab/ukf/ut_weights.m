@@ -20,8 +20,7 @@
 % See also UT_MWEIGHTS UT_TRANSFORM UT_SIGMAS
 % 
 
-% Copyright (C) 2006 Simo Sï¿½rkkï¿½
-%
+% Copyright (C) 2006 Simo Sï¿½rkkï¿?%
 % $Id: ut_weights.m 467 2010-10-12 09:30:14Z jmjharti $
 %
 % This software is distributed under the GNU General Public 
@@ -33,6 +32,7 @@ function [WM,WC,c] = ut_weights(n,alpha,beta,kappa)
 %
 % Check which arguments are there
 %
+
 if nargin < 1
   error('At least dimensionality n required.');
 end

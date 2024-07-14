@@ -3,7 +3,7 @@ clear all;
 
 %% get mesurements
 
-FORMAT_SIM  = 2;
+FORMAT_SIM  = 2;                                                                                                 
 FORMAT_XLS  = 1;
 FORMAT_TXT  = 0;
 FORMAT      = FORMAT_TXT;
@@ -57,6 +57,7 @@ for i = 2 : n
     u(3,i) = u(3,i) - X(13) * 180 / 3.14159;
     f_param(1,2:7) = u(:,i)';
     [Xpre, Ppre] = ukf_predict1(X, P, f_func, Q, f_param, alpha, beta, kappa, mat);
+    % [Xpre, Ppre] = ukf_predict2(X, P, Q, f_param, alpha, beta, kappa, mat);
     Zpre = ukf_track_h_ins(Xpre, hparam);
     %{
     if abs(Zpre(2) - raIn(2,i)) > (3./180*pi) || abs(Zpre(1) - raIn(1,i))>2.
@@ -72,7 +73,7 @@ for i = 2 : n
     end
     %}
     %if ~hasError
-        [X, P] = ukf_update1(Xpre, Ppre, raIn(:,i), h_func, R, hparam, alpha, beta, kappa, mat);
+        [X, P] = ukf_update2(Xpre, Ppre, raIn(:,i), R, hparam, alpha, beta, kappa, mat);
     %end
     %X = normQ(X);
     xyOut(:,i) = X;

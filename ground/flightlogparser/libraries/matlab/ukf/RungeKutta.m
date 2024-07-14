@@ -3,11 +3,11 @@ dT2 = dT / 2;
 Xlast = X;
 
 K1 = ins_state_eq(X, U);
-X = Xlast + dT2 * K1;
+X = Xlast + dT2 * K1';
 K2 = ins_state_eq(X, U);
-X = Xlast + dT2 * K2;
+X = Xlast + dT2 * K2';
 K3 = ins_state_eq(X, U);
-X = Xlast + dT * K3;
+X = Xlast + dT * K3';
 K4 = ins_state_eq(X, U);
 % X = Xlast + dT2 * K4;
 

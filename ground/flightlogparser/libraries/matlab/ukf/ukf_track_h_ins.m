@@ -7,6 +7,7 @@ q2   = x(9,:);
 q3   = x(10,:);
 
 % first six outputs are P and V
+y = zeros(10, size(x,2));
 y(1,:) = x(1,:);
 y(2,:) = x(2,:);
 y(3,:) = x(3,:);
